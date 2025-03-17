@@ -1,3 +1,4 @@
+# reboot serveur pterodactyl
 name: Restart Discord Bot on Pterodactyl
 
 on:
