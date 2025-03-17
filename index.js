@@ -1,3 +1,6 @@
+// Codage By DJBlack copyright 2024/2025
+// Discord: djblack.
+// Github: https://github.com/pasmax2/punch
 const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 require('dotenv').config();
