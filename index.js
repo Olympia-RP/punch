@@ -241,5 +241,5 @@ client.on('messageCreate', async (message) => {
     }
 });
 
-// Connexion du bot 
+// Connexion du bot
 client.login(process.env.TOKEN);
