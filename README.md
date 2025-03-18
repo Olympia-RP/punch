@@ -18,9 +18,6 @@ Punch est un bot Discord permettant de gérer les pointages des utilisateurs. Il
 3. Créez un fichier `.env` à la racine du projet et ajoutez-y vos variables d'environnement :
     ```env
     TOKEN=your_discord_bot_token
-    PTERO_PANEL_URL=your_pterodactyl_panel_url
-    PTERO_SERVER_ID=your_pterodactyl_server_id
-    PTERO_API_KEY=your_pterodactyl_api_key
     ```
 
 ## Utilisation
