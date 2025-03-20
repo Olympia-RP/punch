@@ -122,16 +122,34 @@ client.on('messageCreate', async (message) => {
     if (message.content === '.clockview') {
         const userId = message.author.id;
         const entries = guildData.hours[userId] || [];
-        
+    
         if (entries.length === 0) return message.reply("Aucune heure enregistrée.");
-        
-        let response = `Historique des heures de ${message.author.username} :\n`;
+    
+        let totalTime = 0;
+        let response = `📜 **Historique des heures de ${message.author.username}** :\n`;
+    
         entries.forEach(e => {
-            response += `Entrée: ${e.clockIn}, Sortie: ${e.clockOut || 'Non sorti'}\n`;
+            response += `🕒 **Entrée :** ${e.clockIn} | **Sortie :** ${e.clockOut || 'Non sorti'}\n`;
+            
+            // Calculer le total uniquement si l'utilisateur est sorti
+            if (e.clockOut) {
+                const inTime = new Date(e.clockIn);
+                const outTime = new Date(e.clockOut);
+                if (!isNaN(inTime) && !isNaN(outTime)) {
+                    totalTime += outTime - inTime;
+                }
+            }
         });
-        
+    
+        // Convertir le total en heures et minutes
+        const totalHours = Math.floor(totalTime / 3600000);
+        const totalMinutes = Math.floor((totalTime % 3600000) / 60000);
+    
+        response += `\n⏳ **Total du temps travaillé :** ${totalHours}h ${totalMinutes}min`;
+    
         message.reply(response);
     }
+    
 
     if (message.content === '.clockshow') {
         let report = "Liste des membres ayant pointé :\n";
