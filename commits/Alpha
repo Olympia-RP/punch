@@ -1,0 +1,21 @@
+# Changelog - Punch Discord Bot
+
+## [1.0.0] - 2025-03-20
+### Ajouté
+- Initialisation du projet Punch Discord Bot.
+- Ajout des commandes `.clock`, `.clockin`, `.clockout`, `.clockview` pour gérer les pointages des utilisateurs.
+- Gestion des permissions via un rôle spécifique pour les commandes de pointage.
+- Sauvegarde des données dans un fichier `data.json`.
+- Gestion des événements `guildCreate` pour initialiser les données des serveurs.
+- Ajout de la commande `.clockset log` pour configurer un canal de logs.
+- Ajout de la commande `.clockset role` pour définir un rôle autorisé.
+- Gestion des erreurs JSON lors du chargement des données.
+- Implémentation d'un système de redémarrage propre avec `SIGINT`.
+
+### Modifié
+- Amélioration de la structure des données pour inclure les paramètres du serveur et les heures des utilisateurs.
+
+### Supprimé
+- Aucun élément supprimé dans cette version.
+
+---
