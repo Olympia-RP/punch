@@ -22,15 +22,16 @@ let data = {};
 function loadData() {
     if (fs.existsSync('data.json')) {
         try {
-            const fileData = fs.readFileSync('data.json', 'utf8');
-            if (fileData.trim()) { // Vérifie si le fichier n'est pas vide
-                data = JSON.parse(fileData);
-            }
+            data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
+            console.log("✅ Data chargée :", data);  // Ajoute cette ligne
         } catch (error) {
-            console.error('Erreur de parsing JSON:', error);
+            console.error('❌ Erreur de parsing JSON:', error);
         }
+    } else {
+        console.log("⚠️ Aucun fichier data.json trouvé, création d'un nouveau.");
     }
 }
+
 
 function saveData() {
     fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
