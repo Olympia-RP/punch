@@ -22,7 +22,10 @@ let data = {};
 function loadData() {
     if (fs.existsSync('data.json')) {
         try {
-            data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
+            const fileData = fs.readFileSync('data.json', 'utf8');
+            if (fileData.trim()) { // Vérifie si le fichier n'est pas vide
+                data = JSON.parse(fileData);
+            }
         } catch (error) {
             console.error('Erreur de parsing JSON:', error);
         }
@@ -57,6 +60,7 @@ client.on('messageCreate', async (message) => {
         message.reply('Commandes: .clockin, .clockout, .clockview, .clockshow, .clockset log <channelId>, .clockset role <roleId>');
     }
 
+    // Commande .clockin
     if (message.content === '.clockin') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
@@ -76,8 +80,19 @@ client.on('messageCreate', async (message) => {
         saveData();
         
         message.reply(`Vous êtes maintenant pointé à ${now}.`);
+        
+        // ✅ ENVOYER LE MESSAGE DANS LE CANAL DE LOGS
+        if (guildData.settings.logChannel) {
+            const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
+            if (logChannel) {
+                logChannel.send(`<@${userId}> a pointé à ${now}.`);
+            } else {
+                console.error(`Canal de log introuvable: ${guildData.settings.logChannel}`);
+            }
+        }
     }
 
+    // Commande .clockout
     if (message.content === '.clockout') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
@@ -91,7 +106,18 @@ client.on('messageCreate', async (message) => {
         saveData();
         
         message.reply(`Vous êtes sorti à ${entry.clockOut}.`);
+        
+        // ✅ ENVOYER LE MESSAGE DANS LE CANAL DE LOGS
+        if (guildData.settings.logChannel) {
+            const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
+            if (logChannel) {
+                logChannel.send(`<@${userId}> a quitté à ${entry.clockOut}.`);
+            } else {
+                console.error(`Canal de log introuvable: ${guildData.settings.logChannel}`);
+            }
+        }
     }
+
 
     if (message.content === '.clockview') {
         const userId = message.author.id;
