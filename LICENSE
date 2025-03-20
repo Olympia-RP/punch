@@ -3,35 +3,37 @@ Version 1.0 - 2024/2025
 
 Copyright (c) 2024/2025 DJBlack  
 
-## 1. PRÉAMBULE  
-Cette licence définit les conditions d'utilisation, de modification et de partage du logiciel **Punch**, développé par **DJBlack**.  
+1. PRÉAMBULE  
+Cette licence définit les conditions d'utilisation, de modification et de partage du logiciel Punch, développé par DJBlack.  
 
-## 2. PROPRIÉTÉ  
-Le logiciel **Punch**, incluant son code source, sa documentation et tout élément associé, est la propriété exclusive de **DJBlack**.  
+2. PROPRIÉTÉ  
+Le logiciel Punch, incluant son code source, sa documentation et tout élément associé, est la propriété exclusive de DJBlack.  
 
-## 3. DROITS D'UTILISATION  
-L'utilisation du logiciel est **strictement réservée à un usage personnel**. Toute utilisation commerciale ou en entreprise est **interdite** sans autorisation expresse de **DJBlack**.  
+3. DROITS D'UTILISATION  
+L'utilisation du logiciel est strictement réservée à un usage personnel. Toute utilisation commerciale ou en entreprise est interdite sans autorisation expresse de DJBlack.  
 
-## 4. DROITS DE MODIFICATION  
-L'utilisateur est **autorisé à modifier** le code source du logiciel sous réserve des conditions suivantes :  
-- Toute version modifiée du logiciel **doit inclure cette licence** sans modification.  
-- Toute distribution d'une version modifiée doit être faite **sous cette même licence**.  
-- Le crédit à **DJBlack** doit être **maintenu** dans le code source et toute documentation associée.  
+4. DROITS DE MODIFICATION  
+L'utilisateur est autorisé à modifier le code source du logiciel sous réserve des conditions suivantes :  
+- Toute version modifiée du logiciel doit inclure cette licence sans modification.  
+- Toute distribution d'une version modifiée doit être faite sous cette même licence.  
+- Le crédit à DJBlack doit être maintenu dans le code source et toute documentation associée.  
 
-## 5. RESTRICTIONS  
-- Il est **interdit** de vendre, louer ou redistribuer ce logiciel sous une autre licence.  
+5. RESTRICTIONS  
+- Il est interdit de vendre, louer ou redistribuer ce logiciel sous une autre licence.  
 - La rétro-ingénierie, la décompilation et le désassemblage du code source sont interdits sauf pour les modifications autorisées dans l’article 4.  
-- L'utilisation du logiciel à des fins illégales, frauduleuses ou nuisibles est **strictement interdite**.  
+- L'utilisation du logiciel à des fins illégales, frauduleuses ou nuisibles est strictement interdite.  
 
-## 6. RESPONSABILITÉ  
-L'auteur **DJBlack** ne peut être tenu responsable de tout dommage direct ou indirect résultant de l'utilisation ou de la modification de ce logiciel. L'utilisateur l'emploie à **ses propres risques**.  
+6. RESPONSABILITÉ  
+L'auteur DJBlack ne peut être tenu responsable de tout dommage direct ou indirect résultant de l'utilisation ou de la modification de ce logiciel. L'utilisateur l'emploie à ses propres risques.  
 
-## 7. RÉSILIATION  
-Tout manquement aux conditions de cette licence entraîne la **résiliation immédiate** du droit d'utilisation du logiciel.  
+7. RÉSILIATION  
+Tout manquement aux conditions de cette licence entraîne la résiliation immédiate du droit d'utilisation du logiciel.  
 
-## 8. CONTACT  
-Pour toute question ou demande d'autorisation, veuillez contacter **DJBlack** via :  
-- **Discord** : djblack  
-- **GitHub** : [https://github.com/pasmax2/punch](https://github.com/pasmax2/punch)  
+8. CONTACT  
+Pour toute question ou demande d'autorisation, veuillez contacter DJBlack via :  
+- Discord : djblack.  
+- GitHub : https://github.com/pasmax2/punch
+- Courriel : pasmax2@gmail.com
+- Discord de la communauté : https://discord.gg/w6vwpTbnX6
 
-© 2024/2025 DJBlack - **Tous droits réservés.**  
+© 2024/2025 DJBlack - Tous droits réservés.  
