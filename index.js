@@ -122,34 +122,42 @@ client.on('messageCreate', async (message) => {
 
     if (message.content === '.clockview') {
         const userId = message.author.id;
+        console.log("🔍 Vérification des heures pour :", userId, guildData.hours[userId]);  // Debug
+    
         const entries = guildData.hours[userId] || [];
+        
+        if (entries.length === 0) {
+            return message.reply("Aucune heure enregistrée.");
+        }
     
-        if (entries.length === 0) return message.reply("Aucune heure enregistrée.");
-    
-        let totalTime = 0;
-        let response = `📜 **Historique des heures de ${message.author.username}** :\n`;
+        let totalMilliseconds = 0;
+        let response = `📋 **Historique des heures de ${message.author.username}** :\n`;
     
         entries.forEach(e => {
-            response += `🕒 **Entrée :** ${e.clockIn} | **Sortie :** ${e.clockOut || 'Non sorti'}\n`;
-            
-            // Calculer le total uniquement si l'utilisateur est sorti
+            response += `- 🕐 **Entrée** : ${e.clockIn}, `;
             if (e.clockOut) {
-                const inTime = new Date(e.clockIn);
-                const outTime = new Date(e.clockOut);
-                if (!isNaN(inTime) && !isNaN(outTime)) {
-                    totalTime += outTime - inTime;
+                response += `**Sortie** : ${e.clockOut}\n`;
+    
+                // Calcul du total en millisecondes
+                const startTime = new Date(e.clockIn).getTime();
+                const endTime = new Date(e.clockOut).getTime();
+                if (!isNaN(startTime) && !isNaN(endTime)) {
+                    totalMilliseconds += (endTime - startTime);
                 }
+            } else {
+                response += "**Sortie** : ⏳ Toujours en service\n";
             }
         });
     
         // Convertir le total en heures et minutes
-        const totalHours = Math.floor(totalTime / 3600000);
-        const totalMinutes = Math.floor((totalTime % 3600000) / 60000);
+        const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
+        const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
     
-        response += `\n⏳ **Total du temps travaillé :** ${totalHours}h ${totalMinutes}min`;
+        response += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m`;
     
         message.reply(response);
     }
+    
     
 
     if (message.content === '.clockshow') {
