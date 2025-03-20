@@ -121,14 +121,18 @@ client.on('messageCreate', async (message) => {
 
 
     if (message.content === '.clockview') {
-        const userId = message.author.id;
-        console.log("🔍 Vérification des heures pour :", userId, guildData.hours[userId]);  // Debug
+        // Recharger les données depuis le fichier
+        loadData(); 
     
-        const entries = guildData.hours[userId] || [];
-        
-        if (entries.length === 0) {
+        const guildId = message.guild.id;
+        const userId = message.author.id;
+    
+        // Vérifie si les données existent bien
+        if (!data[guildId] || !data[guildId].hours || !data[guildId].hours[userId]) {
             return message.reply("Aucune heure enregistrée.");
         }
+    
+        const entries = data[guildId].hours[userId];
     
         let totalMilliseconds = 0;
         let response = `📋 **Historique des heures de ${message.author.username}** :\n`;
@@ -157,6 +161,7 @@ client.on('messageCreate', async (message) => {
     
         message.reply(response);
     }
+    
     
     
 
