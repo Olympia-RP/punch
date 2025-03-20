@@ -15,7 +15,7 @@ Punch est un bot Discord permettant de gérer les pointages des utilisateurs. Il
     npm install
     ```
 
-3. Créez un fichier `.env` à la racine du projet et ajoutez-y vos variables d'environnement :
+3. Copier le fichier `.env.exemple` en `.env` à la racine du projet et modifier la variables d'environnement :
     ```env
     TOKEN=your_discord_bot_token
     ```
@@ -41,14 +41,11 @@ Punch est un bot Discord permettant de gérer les pointages des utilisateurs. Il
 
 - Le fichier `data.json` est utilisé pour stocker les données des utilisateurs et les paramètres du bot. Il est créé automatiquement si il n'existe pas.
 
-## Workflow GitHub Actions
-
-Le fichier `.github/workflows/restart-bot.yml` contient un workflow GitHub Actions pour redémarrer le bot sur Pterodactyl à chaque push sur la branche `main`.
-
 ## Auteurs
 
 - Codage By DJBlack
 - Discord: djblack.
+- Discord de la communauté : [Utopia Island (Qc)](https://discord.gg/w6vwpTbnX6)
 - GitHub: [pasmax2](https://github.com/pasmax2)
 
 ## Licence
