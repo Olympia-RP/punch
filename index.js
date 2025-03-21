@@ -175,34 +175,50 @@ client.on('messageCreate', async (message) => {
             return message.reply("Aucune donnée d'heures enregistrée sur ce serveur.");
         }
     
-        let response = `📊 **Temps travaillé par membre sur ${message.guild.name}** :\n`;
+        let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
     
         Object.keys(data[guildId].hours).forEach(userId => {
             const entries = data[guildId].hours[userId];
             let totalMilliseconds = 0;
-            let isCurrentlyClockedIn = false;
+            let userHistory = `**Historique des heures de <@${userId}> :**\n`;
     
             entries.forEach(e => {
-                if (e.clockOut) {
-                    const startTime = new Date(e.clockIn).getTime();
-                    const endTime = new Date(e.clockOut).getTime();
+                const clockIn = e.clockIn;
+                const clockOut = e.clockOut;
+                userHistory += `- 🕐 **Entrée** : ${clockIn}, `;
+                if (clockOut) {
+                    userHistory += `**Sortie** : ${clockOut}\n`;
+    
+                    // Calcul du total en millisecondes
+                    const startTime = new Date(clockIn).getTime();
+                    const endTime = new Date(clockOut).getTime();
                     if (!isNaN(startTime) && !isNaN(endTime)) {
                         totalMilliseconds += (endTime - startTime);
                     }
                 } else {
-                    isCurrentlyClockedIn = true; // L'utilisateur est encore en service
+                    userHistory += "**Sortie** : ⏳ Toujours en service\n";
                 }
             });
     
+            // Convertir le total en heures et minutes
             const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
             const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
     
-            // Ajouter un message différent si l'utilisateur est encore "clocké"
-            response += `- <@${userId}> : **${totalHours}h ${totalMinutes}m** ${isCurrentlyClockedIn ? "(En service)" : ""}\n`;
+            // Ajouter le total à l'historique
+            userHistory += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m\n\n`;
+    
+            // Ajouter l'historique de cet utilisateur à la réponse générale
+            response += userHistory;
         });
+    
+        // Si aucune donnée n'est trouvée, renvoyer un message d'erreur
+        if (response === `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`) {
+            return message.reply("Aucun membre n'a encore enregistré d'heures.");
+        }
     
         message.reply(response);
     }
+    
     
     
 
