@@ -135,7 +135,7 @@ client.on('messageCreate', async (message) => {
     }
 
     if (message.content === '.clockshow') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) OR message.author.id !== botOwnerId) {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) || message.author.id !== botOwnerId) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
         // Recharger les données depuis le fichier
