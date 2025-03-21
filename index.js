@@ -316,25 +316,29 @@ client.on('messageCreate', async (message) => {
     }
 
     if (message.content === '.clockset reset') {
-        // Vérifier si l'utilisateur a les permissions nécessaires (administrateur ou propriétaire du bot)
+        // Vérifier si l'utilisateur a les permissions nécessaires
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
     
-        // Réinitialiser les heures sans toucher à la configuration
-        guildData.hours = {};  // Réinitialiser les heures des membres
+        // Exécuter la requête SQL pour supprimer les heures des membres
+        const sql = `DELETE FROM user_hours WHERE guild_id = ?`;
+        db.query(sql, [guildId], (err, result) => {
+            if (err) {
+                console.error("Erreur lors de la réinitialisation des heures:", err);
+                return message.reply("Une erreur est survenue lors de la réinitialisation des heures.");
+            }
     
-        // Sauvegarder les nouvelles données (avec les heures réinitialisées)
-        saveData(guildId, guildData);
-    
-        message.reply("Les heures des membres ont été réinitialisées.");
-    
-        // Optionnel : envoyer un message dans le canal de log si configuré
-        if (guildData.settings.logChannel) {
-            const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
-            if (logChannel) logChannel.send("Les heures des membres ont été réinitialisées.");
-        }
+            message.reply("Les heures des membres ont été réinitialisées.");
+            
+            // Envoyer un message dans le canal de log si configuré
+            if (guildData.settings.logChannel) {
+                const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
+                if (logChannel) logChannel.send("Les heures des membres ont été réinitialisées.");
+            }
+        });
     }
+    
     
 });
 
