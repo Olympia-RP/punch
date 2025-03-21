@@ -166,20 +166,40 @@ client.on('messageCreate', async (message) => {
     
 
     if (message.content === '.clockshow') {
-        let report = "Liste des membres ayant pointé :\n";
-        
-        Object.keys(guildData.hours).forEach(userId => {
-            let history = `\nHistorique des heures de <@${userId}> :\n`;
-            
-            guildData.hours[userId].forEach(entry => {
-                history += `Entrée: ${entry.clockIn}, Sortie: ${entry.clockOut || 'Non sorti'}\n`;
+        // Recharger les données depuis le fichier
+        loadData(); 
+    
+        const guildId = message.guild.id;
+    
+        if (!data[guildId] || !data[guildId].hours) {
+            return message.reply("Aucune donnée d'heures enregistrée sur ce serveur.");
+        }
+    
+        let response = `📊 **Temps travaillé par membre sur ${message.guild.name}** :\n`;
+    
+        Object.keys(data[guildId].hours).forEach(userId => {
+            const entries = data[guildId].hours[userId];
+            let totalMilliseconds = 0;
+    
+            entries.forEach(e => {
+                if (e.clockOut) {
+                    const startTime = new Date(e.clockIn).getTime();
+                    const endTime = new Date(e.clockOut).getTime();
+                    if (!isNaN(startTime) && !isNaN(endTime)) {
+                        totalMilliseconds += (endTime - startTime);
+                    }
+                }
             });
-            
-            report += history;
+    
+            const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
+            const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+    
+            response += `- <@${userId}> : **${totalHours}h ${totalMinutes}m**\n`;
         });
-        
-        message.channel.send(report);
+    
+        message.reply(response);
     }
+    
 
     if (message.content.startsWith('.clockset log')) {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
