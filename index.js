@@ -3,6 +3,7 @@ const fs = require('fs');
 const mysql = require('mysql2');
 require('dotenv').config();
 
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
