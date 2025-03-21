@@ -164,7 +164,8 @@ client.on('messageCreate', async (message) => {
         guildData.settings.allowedRole = roleId;
         saveData(guildId, guildData);
         message.reply(`Le rôle autorisé a été défini sur ${role.name}.`);
-
+    }
+    
     if (message.content === '.invite') {
         if (message.author.id !== botOwnerId) {
             return message.reply("Seul l'owner du bot peut utiliser cette commande.")
@@ -176,7 +177,7 @@ client.on('messageCreate', async (message) => {
             .then(msg => setTimeout(() => msg.delete().catch(() => {}), 30000));
     }
 
-    
+
 });
 
 client.login(process.env.TOKEN);
