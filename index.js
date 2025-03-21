@@ -160,6 +160,15 @@ client.on('messageCreate', async (message) => {
         response += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m`;
     
         message.reply(response);
+        // ✅ ENVOYER LE MESSAGE DANS LE CANAL DE LOGS
+        if (guildData.settings.logChannel) {
+            const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
+            if (logChannel) {
+                logChannel.send(`<@${userId}> à use la commande \`.clockview\`.`);
+            } else {
+                console.error(`Canal de log introuvable: ${guildData.settings.logChannel}`);
+            }
+        }
     }
     
     
@@ -217,6 +226,15 @@ client.on('messageCreate', async (message) => {
         }
     
         message.reply(response);
+        // ✅ ENVOYER LE MESSAGE DANS LE CANAL DE LOGS
+        if (guildData.settings.logChannel) {
+            const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
+            if (logChannel) {
+                logChannel.send(`<@${userId}> à use la commande \`.clockshow\`.`);
+            } else {
+                console.error(`Canal de log introuvable: ${guildData.settings.logChannel}`);
+            }
+        }
     }
     
     
