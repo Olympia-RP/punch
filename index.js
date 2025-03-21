@@ -160,13 +160,16 @@ client.on('messageCreate', async (message) => {
         response += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m`;
     
         message.reply(response);
-        
+
     }
     
     
     
 
     if (message.content === '.clockshow') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
+        }
         // Recharger les données depuis le fichier
         loadData(); 
     
