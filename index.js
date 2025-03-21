@@ -214,55 +214,61 @@ client.on('messageCreate', async (message) => {
         message.reply(response);
     }
 
-    if (message.content === '.clockshow') {
+    iif (message.content === '.clockshow') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
-
-        let guildData = loadData(message.guild.id);
-
-        if (!guildData.hours) {
-            return message.reply("Aucune donnée d'heures enregistrée sur ce serveur.");
-        }
-
-        let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
-
-        Object.keys(guildData.hours).forEach(userId => {
-            const entries = guildData.hours[userId];
-            let totalMilliseconds = 0;
-            let userHistory = `**Historique des heures de <@${userId}> :**\n`;
-
-            entries.forEach(e => {
-                const clockIn = e.clockIn;
-                const clockOut = e.clockOut;
-                userHistory += `- 🕐 **Entrée** : ${clockIn}, `;
-                if (clockOut) {
-                    userHistory += `**Sortie** : ${clockOut}\n`;
-
-                    const startTime = new Date(clockIn).getTime();
-                    const endTime = new Date(clockOut).getTime();
-                    if (!isNaN(startTime) && !isNaN(endTime)) {
-                        totalMilliseconds += (endTime - startTime);
+    
+        try {
+            guildData = await loadData(message.guild.id);  // Assurer que les dernières données sont chargées
+    
+            if (!guildData.hours || Object.keys(guildData.hours).length === 0) {
+                return message.reply("Aucune donnée d'heures enregistrée sur ce serveur.");
+            }
+    
+            let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
+    
+            Object.keys(guildData.hours).forEach(userId => {
+                const entries = guildData.hours[userId];
+                let totalMilliseconds = 0;
+                let userHistory = `**Historique des heures de <@${userId}> :**\n`;
+    
+                entries.forEach(e => {
+                    const clockIn = e.clockIn;
+                    const clockOut = e.clockOut;
+                    userHistory += `- 🕐 **Entrée** : ${clockIn}, `;
+                    if (clockOut) {
+                        userHistory += `**Sortie** : ${clockOut}\n`;
+    
+                        const startTime = new Date(clockIn).getTime();
+                        const endTime = new Date(clockOut).getTime();
+                        if (!isNaN(startTime) && !isNaN(endTime)) {
+                            totalMilliseconds += (endTime - startTime);
+                        }
+                    } else {
+                        userHistory += "**Sortie** : ⏳ Toujours en service\n";
                     }
-                } else {
-                    userHistory += "**Sortie** : ⏳ Toujours en service\n";
-                }
+                });
+    
+                const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
+                const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+    
+                userHistory += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m\n\n`;
+    
+                response += userHistory;
             });
-
-            const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
-            const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
-
-            userHistory += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m\n\n`;
-
-            response += userHistory;
-        });
-
-        if (response === `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`) {
-            return message.reply("Aucun membre n'a encore enregistré d'heures.");
+    
+            if (response === `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`) {
+                return message.reply("Aucun membre n'a encore enregistré d'heures.");
+            }
+    
+            message.reply(response);
+        } catch (error) {
+            console.error("Erreur lors du traitement de la commande .clockshow :", error);
+            message.reply("Une erreur est survenue lors de l'affichage des heures.");
         }
-
-        message.reply(response);
     }
+    
 
     // Commande .clockset log
     if (message.content.startsWith('.clockset log')) {
