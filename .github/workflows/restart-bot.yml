@@ -4,18 +4,16 @@ name: Restart Discord Bot on Pterodactyl
 on:
   push:
     branches:
-      - main  # Déclenche le workflow sur un push dans la branche
+      - main  # Déclenche le workflow sur un push dans la branche principale
 
 jobs:
   restart:
     runs-on: ubuntu-latest  # Exécute le workflow sur une machine Ubuntu
-
+    
     steps:
       - name: Redémarrer le serveur Pterodactyl
         run: |
-          curl -X POST "${{ vars.PTERO_PANEL_URL }}api/client/servers/${{ vars.PTERO_SERVERS_ID }}/power" \
+          curl -X POST "${{ vars.PTERO_PANEL_URL }}api/client/servers/${{ vars.PTERO_SERVER_ID }}/power" \
           -H "Authorization: Bearer ${{ secrets.PTERO_API_KEY }}" \
           -H "Content-Type: application/json" \
           -d '{"signal": "restart"}'
-
-          
