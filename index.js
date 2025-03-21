@@ -314,6 +314,28 @@ client.on('messageCreate', async (message) => {
 
         message.reply(`Le rôle ${role.name} a été défini comme rôle autorisé pour utiliser les commandes de pointage.`);
     }
+
+    if (message.content === '.clockset reset') {
+        // Vérifier si l'utilisateur a les permissions nécessaires (administrateur ou propriétaire du bot)
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
+            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
+        }
+    
+        // Réinitialiser les heures sans toucher à la configuration
+        guildData.hours = {};  // Réinitialiser les heures des membres
+    
+        // Sauvegarder les nouvelles données (avec les heures réinitialisées)
+        saveData(guildId, guildData);
+    
+        message.reply("Les heures des membres ont été réinitialisées.");
+    
+        // Optionnel : envoyer un message dans le canal de log si configuré
+        if (guildData.settings.logChannel) {
+            const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
+            if (logChannel) logChannel.send("Les heures des membres ont été réinitialisées.");
+        }
+    }
+    
 });
 
 client.login(process.env.BOT_TOKEN);
