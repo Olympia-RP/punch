@@ -12,6 +12,8 @@ const client = new Client({
 });
 
 const DATA_DIR = './data/';
+const botOwnerId = process.env.BOT_OWNER_ID; // Stocke l'ID du propriétaire du bot dans une variable d'environnement
+
 
 // Vérifier si le dossier "data" existe, sinon le créer
 if (!fs.existsSync(DATA_DIR)) {
