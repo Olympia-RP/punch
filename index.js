@@ -214,7 +214,7 @@ client.on('messageCreate', async (message) => {
         message.reply(response);
     }
 
-    iif (message.content === '.clockshow') {
+    if (message.content === '.clockshow') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
