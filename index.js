@@ -167,27 +167,29 @@ client.on('messageCreate', async (message) => {
         const userId = message.author.id;
         const entry = guildData.hours[userId]?.find(entry => entry.clockOut === null);
     
-        // Vérification si l'utilisateur a bien une entrée active
+        // Vérifier si l'utilisateur est bien en cours de pointage
         if (!entry) {
             return message.reply("Vous n'êtes pas actuellement pointé. Veuillez d'abord utiliser .clockin.");
         }
     
         // Utilisation de moment pour formater la date de manière correcte
         const clockOut = moment().format('YYYY-MM-DD HH:mm:ss');
-        
-        // Mise à jour de l'entrée existante avec le `clockOut`
+    
+        // Mettre à jour uniquement la première entrée sans 'clockOut'
         entry.clockOut = clockOut;
     
-        // Sauvegarder les données mises à jour
+        // Sauvegarder les modifications dans la base de données
         saveData(guildId, guildData);
     
         message.reply(`Vous êtes sorti à ${clockOut}.`);
     
+        // Envoi d'un message dans le canal de log si configuré
         if (guildData.settings.logChannel) {
             const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
             if (logChannel) logChannel.send(`<@${userId}> a quitté à ${clockOut}.`);
         }
     }
+    
     
     
 
