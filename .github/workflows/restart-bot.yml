@@ -4,7 +4,7 @@ name: Restart Discord Bot on Pterodactyl
 on:
   push:
     branches:
-      - dev  # Déclenche le workflow sur un push dans la branche principale
+      - dev  # Déclenche le workflow sur un push dans la branche
 
 jobs:
   restart:
