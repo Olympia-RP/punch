@@ -14,7 +14,7 @@ const client = new Client({
     ]
 });
 
-const DATA_DIR = './data/';
+
 const botOwnerId = process.env.BOT_OWNER_ID; // Stocke l'ID du propriétaire du bot dans une variable d'environnement
 // Connexion à la base de données
 const connection = mysql.createConnection({
@@ -31,11 +31,6 @@ connection.connect((err) => {
     }
     console.log('Connecté à la base de données MySQL.');
 });
-
-// Vérifier si le dossier "data" existe, sinon le créer
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-}
 
 // Fonction pour charger les données d'un serveur spécifique depuis MySQL
 function loadData(guildId) {
@@ -192,92 +187,70 @@ client.on('messageCreate', async (message) => {
     }
     
 
-    if (message.content === '.clockview') {
-        guildData = await loadData(guildId);
-
-        const userId = message.author.id;
-        if (!guildData.hours[userId]) return message.reply("Aucune heure enregistrée.");
-
-        const entries = guildData.hours[userId];
-        let totalMilliseconds = 0;
-        let response = `📋 **Historique des heures de <@${userId}>** :\n`;
-
-        entries.forEach(e => {
-            response += `- 🕐 **Entrée** : ${e.clockIn}, `;
-            if (e.clockOut) {
-                response += `**Sortie** : ${e.clockOut}\n`;
-
-                const startTime = new Date(e.clockIn).getTime();
-                const endTime = new Date(e.clockOut).getTime();
-                if (!isNaN(startTime) && !isNaN(endTime)) {
-                    totalMilliseconds += (endTime - startTime);
-                }
-            } else {
-                response += "**Sortie** : ⏳ Toujours en service\n";
-            }
-        });
-
-        const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
-        const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
-        response += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m`;
-
-        message.reply(response);
-    }
-
-    if (message.content === '.clockshow') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
-            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
-        }
+    const formatDate = (dateString) => {
+        if (!dateString) return 'En cours';
+        const date = new Date(dateString);
+        return date.toLocaleString('fr-CA', { timeZone: 'America/Toronto', hour12: false });
+    };
     
-        try {
-            guildData = await loadData(message.guild.id);  // Assurer que les dernières données sont chargées
-    
-            if (!guildData.hours || Object.keys(guildData.hours).length === 0) {
-                return message.reply("Aucune donnée d'heures enregistrée sur ce serveur.");
-            }
-    
-            let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
-    
-            Object.keys(guildData.hours).forEach(userId => {
-                const entries = guildData.hours[userId];
-                let totalMilliseconds = 0;
-                let userHistory = `**Historique des heures de <@${userId}> :**\n`;
-    
-                entries.forEach(e => {
-                    const clockIn = e.clockIn;
-                    const clockOut = e.clockOut;
-                    userHistory += `- 🕐 **Entrée** : ${clockIn}, `;
-                    if (clockOut) {
-                        userHistory += `**Sortie** : ${clockOut}\n`;
-    
-                        const startTime = new Date(clockIn).getTime();
-                        const endTime = new Date(clockOut).getTime();
-                        if (!isNaN(startTime) && !isNaN(endTime)) {
-                            totalMilliseconds += (endTime - startTime);
-                        }
-                    } else {
-                        userHistory += "**Sortie** : ⏳ Toujours en service\n";
+    client.on('messageCreate', async (message) => {
+        if (message.content === '.clockshow') {
+            const guildId = message.guild.id;
+            connection.query(
+                'SELECT user_id, clock_in, clock_out FROM user_hours WHERE guild_id = ?',
+                [guildId],
+                (err, results) => {
+                    if (err) {
+                        console.error('Erreur lors de la récupération des heures:', err);
+                        return message.reply('❌ Une erreur est survenue.');
                     }
-                });
     
-                const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
-                const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+                    if (results.length === 0) {
+                        return message.reply('📭 Aucun membre n’a enregistré d’heures.');
+                    }
     
-                userHistory += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m\n\n`;
+                    let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
     
-                response += userHistory;
-            });
+                    results.forEach(row => {
+                        const entree = formatDate(row.clock_in);
+                        const sortie = formatDate(row.clock_out);
+                        response += `🕐 **<@${row.user_id}>** : Entrée : ${entree}, Sortie : ${sortie}\n`;
+                    });
     
-            if (response === `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`) {
-                return message.reply("Aucun membre n'a encore enregistré d'heures.");
-            }
-    
-            message.reply(response);
-        } catch (error) {
-            console.error("Erreur lors du traitement de la commande .clockshow :", error);
-            message.reply("Une erreur est survenue lors de l'affichage des heures.");
+                    message.reply(response);
+                }
+            );
         }
-    }
+    
+        if (message.content.startsWith('.clockview')) {
+            const userId = message.mentions.users.first()?.id || message.author.id;
+            connection.query(
+                'SELECT clock_in, clock_out FROM user_hours WHERE user_id = ? AND guild_id = ?',
+                [userId, message.guild.id],
+                (err, results) => {
+                    if (err) {
+                        console.error('Erreur lors de la récupération des heures:', err);
+                        return message.reply('❌ Une erreur est survenue.');
+                    }
+    
+                    if (results.length === 0) {
+                        return message.reply(`📭 Aucun historique pour <@${userId}>.`);
+                    }
+    
+                    let response = `📊 **Historique des heures de <@${userId}>** :\n`;
+    
+                    results.forEach(row => {
+                        const entree = formatDate(row.clock_in);
+                        const sortie = formatDate(row.clock_out);
+                        response += `🕐 Entrée : ${entree}, Sortie : ${sortie}\n`;
+                    });
+    
+                    message.reply(response);
+                }
+            );
+        }
+    });
+    
     
 
     // Commande .clockset log
