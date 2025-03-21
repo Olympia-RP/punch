@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Redémarrer le serveur Pterodactyl
         run: |
-          curl -X POST "https://${{ vars.PTERO_PANEL_URL }}/api/client/servers/${{ vars.PTERO_SERVERS_ID }}/power" \
+          curl -X POST "${{ vars.PTERO_PANEL_URL }}api/client/servers/${{ vars.PTERO_SERVERS_ID }}/power" \
           -H "Authorization: Bearer ${{ secrets.PTERO_API_KEY }}" \
           -H "Content-Type: application/json" \
           -d '{"signal": "restart"}'
