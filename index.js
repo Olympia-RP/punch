@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 const fs = require('fs');
+const mysql = require('mysql2');
 require('dotenv').config();
 
 const client = new Client({
@@ -13,46 +14,121 @@ const client = new Client({
 
 const DATA_DIR = './data/';
 const botOwnerId = process.env.BOT_OWNER_ID; // Stocke l'ID du propriétaire du bot dans une variable d'environnement
+// Connexion à la base de données
+const connection = mysql.createConnection({
+    host: 'localhost',    // Hôte de la base de données
+    user: 'u49_8Po4ISpvKu',         // Utilisateur MySQL
+    password: '^a7NTdS5CE=2=etIktAezbyy', // Mot de passe
+    database: 's49_punch'  // Nom de la base de données
+});
 
+connection.connect((err) => {
+    if (err) {
+        console.error('Erreur de connexion à la base de données:', err.stack);
+        return;
+    }
+    console.log('Connecté à la base de données MySQL.');
+});
 
 // Vérifier si le dossier "data" existe, sinon le créer
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Fonction pour charger les données d'un serveur spécifique
+// Fonction pour charger les données d'un serveur spécifique depuis MySQL
 function loadData(guildId) {
-    const filePath = `${DATA_DIR}${guildId}.json`;
-    if (fs.existsSync(filePath)) {
-        try {
-            return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        } catch (error) {
-            console.error(`❌ Erreur de parsing JSON pour ${guildId}:`, error);
-            return { settings: { logChannel: null, allowedRole: null }, hours: {} };
-        }
-    } else {
-        console.log(`⚠️ Aucun fichier trouvé pour ${guildId}, création d'un nouveau.`);
-        return { settings: { logChannel: null, allowedRole: null }, hours: {} };
-    }
+    return new Promise((resolve, reject) => {
+        // Charger les paramètres du serveur
+        connection.query(
+            'SELECT * FROM guild_settings WHERE guild_id = ?',
+            [guildId],
+            (err, results) => {
+                if (err) {
+                    return reject(`Erreur lors du chargement des paramètres : ${err.message}`);
+                }
+                if (results.length === 0) {
+                    return resolve({ settings: { logChannel: null, allowedRole: null }, hours: {} });
+                }
+
+                const guildData = {
+                    settings: {
+                        logChannel: results[0].log_channel,
+                        allowedRole: results[0].allowed_role
+                    },
+                    hours: {}
+                };
+
+                // Charger les heures des utilisateurs
+                connection.query(
+                    'SELECT * FROM user_hours WHERE guild_id = ?',
+                    [guildId],
+                    (err, results) => {
+                        if (err) {
+                            return reject(`Erreur lors du chargement des heures : ${err.message}`);
+                        }
+
+                        results.forEach(entry => {
+                            const userId = entry.user_id;
+                            if (!guildData.hours[userId]) guildData.hours[userId] = [];
+
+                            guildData.hours[userId].push({
+                                clockIn: entry.clock_in,
+                                clockOut: entry.clock_out
+                            });
+                        });
+
+                        resolve(guildData);
+                    }
+                );
+            }
+        );
+    });
 }
 
-// Fonction pour sauvegarder les données d'un serveur spécifique
+// Fonction pour sauvegarder les données dans la base de données MySQL
 function saveData(guildId, guildData) {
-    const filePath = `${DATA_DIR}${guildId}.json`;
-    fs.writeFileSync(filePath, JSON.stringify(guildData, null, 2));
+    // Sauvegarder les paramètres du serveur
+    connection.query(
+        'INSERT INTO guild_settings (guild_id, log_channel, allowed_role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE log_channel = ?, allowed_role = ?',
+        [guildId, guildData.settings.logChannel, guildData.settings.allowedRole, guildData.settings.logChannel, guildData.settings.allowedRole],
+        (err) => {
+            if (err) {
+                console.error('Erreur lors de la sauvegarde des paramètres:', err);
+            }
+        }
+    );
+
+    // Sauvegarder les heures des utilisateurs
+    Object.keys(guildData.hours).forEach(userId => {
+        guildData.hours[userId].forEach(entry => {
+            connection.query(
+                'INSERT INTO user_hours (guild_id, user_id, clock_in, clock_out) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE clock_out = ?',
+                [guildId, userId, entry.clockIn, entry.clockOut, entry.clockOut],
+                (err) => {
+                    if (err) {
+                        console.error(`Erreur lors de la sauvegarde des heures pour l'utilisateur ${userId}:`, err);
+                    }
+                }
+            );
+        });
+    });
 }
 
-// Charger les données pour chaque serveur lors de l'événement guildCreate
-client.on('guildCreate', (guild) => {
-    const guildData = loadData(guild.id);
-    saveData(guild.id, guildData);
+client.on('guildCreate', async (guild) => {
+    try {
+        const guildData = await loadData(guild.id);
+        await saveData(guild.id, guildData);
+    } catch (error) {
+        console.error(`Erreur lors du traitement du serveur ${guild.id}:`, error);
+    }
 });
+
 
 client.on('messageCreate', async (message) => {
     if (!message.guild || message.author.bot) return;
 
     const guildId = message.guild.id;
-    let guildData = loadData(guildId);
+    let guildData = await loadData(guildId);
 
     if (message.content === '.clock') {
         message.reply('Commandes: .clockin, .clockout, .clockview, .clockshow, .clockset log <channelId>, .clockset role <roleId>');
@@ -105,7 +181,7 @@ client.on('messageCreate', async (message) => {
     }
 
     if (message.content === '.clockview') {
-        guildData = loadData(guildId);
+        guildData = await loadData(guildId);
 
         const userId = message.author.id;
         if (!guildData.hours[userId]) return message.reply("Aucune heure enregistrée.");
@@ -233,12 +309,12 @@ client.on('messageCreate', async (message) => {
     
         // Demander la confirmation
         const confirmationMessage = await message.reply("Êtes-vous sûr de vouloir réinitialiser toutes les heures pour tous les membres ? Tapez 'oui' pour confirmer.");
-    
+        
         // Attendre la réponse de l'utilisateur
         const filter = (response) => {
             return response.author.id === message.author.id && response.content.toUpperCase() === 'oui';
         };
-    
+        
         try {
             // Attendre 30 secondes pour la confirmation
             const collected = await message.channel.awaitMessages({
@@ -247,12 +323,20 @@ client.on('messageCreate', async (message) => {
                 time: 30000,
                 errors: ['time'],
             });
-    
+        
             // Réinitialiser les heures si la confirmation est reçue
-            let guildData = loadData(message.guild.id);
-            guildData.hours = {};  // Réinitialiser les heures de tous les membres
-            saveData(message.guild.id, guildData);
+            connection.query(
+                'DELETE FROM user_hours WHERE guild_id = ?',
+                [message.guild.id],
+                (err) => {
+                    if (err) {
+                        return message.reply(`Erreur lors de la réinitialisation des heures : ${err.message}`);
+                    }
     
+                    message.reply("Toutes les heures ont été réinitialisées pour tous les membres.");
+                }
+            );
+        
             // Log de la réinitialisation
             if (guildData.settings.logChannel) {
                 const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
@@ -260,9 +344,6 @@ client.on('messageCreate', async (message) => {
                     logChannel.send(`🔄 **Réinitialisation des heures de tous les membres** effectuée par <@${message.author.id}> (${message.author.tag}).`);
                 }
             }
-    
-            message.reply("Toutes les heures ont été réinitialisées pour tous les membres.");
-    
         } catch (err) {
             // Si aucune réponse n'est reçue dans le délai, annuler l'action
             message.reply("Réinitialisation annulée, aucune confirmation reçue.");
@@ -271,6 +352,7 @@ client.on('messageCreate', async (message) => {
             confirmationMessage.delete().catch(() => {});
         }
     }
+    
 
     if (message.content === '.invite') {
         if (message.author.id !== botOwnerId) {
