@@ -102,6 +102,7 @@ function saveData(guildId, guildData) {
     // Sauvegarder les heures des utilisateurs
     Object.keys(guildData.hours).forEach(userId => {
         guildData.hours[userId].forEach(entry => {
+            console.log("Sauvegarde de l'heure pour l'utilisateur:", userId, entry);  // Log des données à sauvegarder
             connection.query(
                 'INSERT INTO user_hours (guild_id, user_id, clock_in, clock_out) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE clock_out = ?',
                 [guildId, userId, entry.clockIn, entry.clockOut, entry.clockOut],
@@ -114,6 +115,7 @@ function saveData(guildId, guildData) {
         });
     });
 }
+
 
 client.on('guildCreate', async (guild) => {
     try {
@@ -138,25 +140,32 @@ client.on('messageCreate', async (message) => {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
         }
-
+    
         const userId = message.author.id;
         if (!guildData.hours[userId]) guildData.hours[userId] = [];
-
+    
         if (guildData.hours[userId].some(entry => entry.clockOut === null)) {
             return message.reply("Vous êtes déjà pointé.");
         }
-
-        const now = new Date().toLocaleString();
+    
+        // Utilisation de moment pour formater la date de manière correcte
+        const now = moment().format('YYYY-MM-DD HH:mm:ss');
         guildData.hours[userId].push({ clockIn: now, clockOut: null });
+    
+        console.log("Données avant sauvegarde:", guildData.hours);  // Log pour vérifier les données
+    
         saveData(guildId, guildData);
-
+        
+        console.log("Données après sauvegarde:", guildData.hours);  // Log après sauvegarde
+    
         message.reply(`Vous êtes maintenant pointé à ${now}.`);
-
+    
         if (guildData.settings.logChannel) {
             const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
             if (logChannel) logChannel.send(`<@${userId}> a pointé à ${now}.`);
         }
     }
+    
 
     if (message.content === '.clockout') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
