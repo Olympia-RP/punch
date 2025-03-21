@@ -190,7 +190,15 @@ client.on('messageCreate', async (message) => {
     const formatDate = (dateString) => {
         if (!dateString) return 'En cours';
         const date = new Date(dateString);
-        return date.toLocaleString('fr-CA', { timeZone: 'America/Toronto', hour12: false });
+        return date.toLocaleString('fr-CA', { 
+            timeZone: 'America/Toronto', 
+            hour12: false, 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        }).replace(',', ''); // Enlève la virgule pour un affichage propre
     };
     
     client.on('messageCreate', async (message) => {
