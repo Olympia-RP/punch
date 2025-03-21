@@ -17,7 +17,7 @@ Punch est un bot Discord permettant de gérer les pointages des utilisateurs. Il
 
 3. Copier le fichier `.env.exemple` en `.env` à la racine du projet et modifier la variables d'environnement :
     ```env
-        BOT_TOKEN=                              # Le jeton d'authentification du bot Discord
+        BOT_TOKEN=                          # Le jeton d'authentification du bot Discord
         BOT_OWNER_ID=                       # L'identifiant Discord du propriétaire du bot
         DB_HOST=                            # L'adresse de l'hôte de la base de données (ex: localhost)
         DB_USER=                            # Le nom d'utilisateur pour se connecter à la base de données
