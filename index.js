@@ -195,7 +195,7 @@ client.on('messageCreate', async (message) => {
     
 
     if (message.content.startsWith('.clockset log')) {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)  || message.author.id !== botOwnerId) {
+        if ( !message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId ) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
 
@@ -211,7 +211,7 @@ client.on('messageCreate', async (message) => {
     }
 
     if (message.content.startsWith('.clockset role')) {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)  || message.author.id !== botOwnerId) {
+        if ( !message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId ) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
 
@@ -227,7 +227,7 @@ client.on('messageCreate', async (message) => {
     }
 
     if (message.content === '.clockset reset') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        if ( !message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId ) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
     
