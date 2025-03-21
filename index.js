@@ -162,21 +162,25 @@ client.on('messageCreate', async (message) => {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
         }
-
+    
         const userId = message.author.id;
         const entry = guildData.hours[userId]?.find(entry => entry.clockOut === null);
         if (!entry) return message.reply("Vous n'êtes pas pointé.");
-
-        entry.clockOut = new Date().toLocaleString();
+    
+        // Formater la date de sortie au format MySQL 'YYYY-MM-DD HH:MM:SS'
+        const clockOut = new Date().toISOString().replace("T", " ").split(".")[0]; // format: 'YYYY-MM-DD HH:MM:SS'
+        
+        entry.clockOut = clockOut;
         saveData(guildId, guildData);
-
-        message.reply(`Vous êtes sorti à ${entry.clockOut}.`);
-
+    
+        message.reply(`Vous êtes sorti à ${clockOut}.`);
+    
         if (guildData.settings.logChannel) {
             const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
-            if (logChannel) logChannel.send(`<@${userId}> a quitté à ${entry.clockOut}.`);
+            if (logChannel) logChannel.send(`<@${userId}> a quitté à ${clockOut}.`);
         }
     }
+    
 
     if (message.content === '.clockview') {
         guildData = await loadData(guildId);
