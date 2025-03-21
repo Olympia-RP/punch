@@ -198,63 +198,70 @@ client.on('messageCreate', async (message) => {
     };
 
     // Affichage de l'historique des heures
-    if (message.content === '.clockshow') {
-        connection.query(
-            'SELECT user_id, clock_in, clock_out FROM user_hours WHERE guild_id = ?',
-            [guildId],
-            (err, results) => {
-                if (err) {
-                    console.error('Erreur lors de la récupération des heures:', err);
-                    return message.reply('❌ Une erreur est survenue.');
-                }
-
-                if (results.length === 0) {
-                    return message.reply('📭 Aucun membre n’a enregistré d’heures.');
-                }
-
-                let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
-
-                // Regroupe les heures par utilisateur
-                const userHours = {};
-                results.forEach(row => {
-                    if (!userHours[row.user_id]) userHours[row.user_id] = [];
-                    userHours[row.user_id].push({
-                        clockIn: moment(row.clock_in).format('ddd MMM DD YYYY HH:mm'),
-                        clockOut: row.clock_out ? moment(row.clock_out).format('ddd MMM DD YYYY HH:mm') : null
+    client.on('messageCreate', async (message) => {
+        if (!message.guild || message.author.bot) return;
+    
+        const guildId = message.guild.id;
+        
+        if (message.content === '.clockshow') {
+            connection.query(
+                'SELECT user_id, clock_in, clock_out FROM user_hours WHERE guild_id = ?',
+                [guildId],
+                (err, results) => {
+                    if (err) {
+                        console.error('Erreur lors de la récupération des heures:', err);
+                        return message.reply('❌ Une erreur est survenue.');
+                    }
+    
+                    if (results.length === 0) {
+                        return message.reply('📭 Aucun membre n’a enregistré d’heures.');
+                    }
+    
+                    let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
+    
+                    // Regroupe les heures par utilisateur
+                    const userHours = {};
+                    results.forEach(row => {
+                        if (!userHours[row.user_id]) userHours[row.user_id] = [];
+                        userHours[row.user_id].push({
+                            clockIn: moment(row.clock_in).format('ddd MMM DD YYYY HH:mm'),
+                            clockOut: row.clock_out ? moment(row.clock_out).format('ddd MMM DD YYYY HH:mm') : null
+                        });
                     });
-                });
-
-                // Affiche les heures pour chaque utilisateur
-                Object.keys(userHours).forEach(userId => {
-                    const user = message.guild.members.cache.get(userId);
-                    response += `\n**Historique des heures de ${user ? user.user.tag : userId}** :\n`;
-
-                    let totalWorkedMinutes = 0;
-                    userHours[userId].forEach(entry => {
-                        const clockIn = entry.clockIn;
-                        const clockOut = entry.clockOut ? entry.clockOut : 'En cours';
-
-                        // Calcul du total de temps travaillé si sortie existe
-                        if (entry.clockOut) {
-                            const clockInTime = moment(entry.clockIn);
-                            const clockOutTime = moment(entry.clockOut);
-                            const diffMinutes = clockOutTime.diff(clockInTime, 'minutes');
-                            totalWorkedMinutes += diffMinutes;
-                        }
-
-                        response += `🕐 Entrée : ${clockIn}, Sortie : ${clockOut}\n`;
+    
+                    // Affiche les heures pour chaque utilisateur
+                    Object.keys(userHours).forEach(userId => {
+                        const user = message.guild.members.cache.get(userId);
+                        response += `\n**Historique des heures de ${user ? user.user.tag : userId}** :\n`;
+    
+                        let totalWorkedMinutes = 0;
+                        userHours[userId].forEach(entry => {
+                            const clockIn = entry.clockIn;
+                            const clockOut = entry.clockOut ? entry.clockOut : 'En cours';
+    
+                            // Calcul du total de temps travaillé si sortie existe
+                            if (entry.clockOut) {
+                                const clockInTime = moment(entry.clockIn, 'ddd MMM DD YYYY HH:mm');
+                                const clockOutTime = moment(entry.clockOut, 'ddd MMM DD YYYY HH:mm');
+                                const diffMinutes = clockOutTime.diff(clockInTime, 'minutes');
+                                totalWorkedMinutes += diffMinutes;
+                            }
+    
+                            response += `🕐 Entrée : ${clockIn}, Sortie : ${clockOut}\n`;
+                        });
+    
+                        // Calcule les heures et minutes totales
+                        const hours = Math.floor(totalWorkedMinutes / 60);
+                        const minutes = totalWorkedMinutes % 60;
+                        response += `⏳ **Total travaillé** : ${hours}h ${minutes}m\n`;
                     });
-
-                    // Calcule les heures et minutes totales
-                    const hours = Math.floor(totalWorkedMinutes / 60);
-                    const minutes = totalWorkedMinutes % 60;
-                    response += `⏳ **Total travaillé** : ${hours}h ${minutes}m\n`;
-                });
-
-                message.reply(response);
-            }
-        );
-    }
+    
+                    message.reply(response);
+                }
+            );
+        }
+    });
+    
 
     // Affichage des heures d'un utilisateur
     if (message.content.startsWith('.clockview')) {
