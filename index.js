@@ -232,11 +232,11 @@ client.on('messageCreate', async (message) => {
         }
     
         // Demander la confirmation
-        const confirmationMessage = await message.reply("Êtes-vous sûr de vouloir réinitialiser toutes les heures pour tous les membres ? Tapez 'O' pour confirmer.");
+        const confirmationMessage = await message.reply("Êtes-vous sûr de vouloir réinitialiser toutes les heures pour tous les membres ? Tapez 'oui' pour confirmer.");
     
         // Attendre la réponse de l'utilisateur
         const filter = (response) => {
-            return response.author.id === message.author.id && response.content.toUpperCase() === 'O';
+            return response.author.id === message.author.id && response.content.toUpperCase() === 'oui';
         };
     
         try {
