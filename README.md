@@ -48,6 +48,8 @@ Punch est un bot Discord permettant de gérer les pointages des utilisateurs. Il
 
 - Les données des utilisateurs et les paramètres du bot sont désormais gérés via une base de données MySQL. Assurez-vous que les informations de connexion à la base de données sont correctement configurées dans le fichier `.env`. Le fichier `data/IDGUILD.json` n'est plus utilisé.
 
+`mysql -u <votre_utilisateur> -p <votre_base_de_données> < setup.sql`
+
 ## Auteurs
 
 - Codage By DJBlack

@@ -354,23 +354,38 @@ client.on('messageCreate', async (message) => {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
     
-        // Exécuter la requête SQL pour supprimer les heures des membres
-        const sql = `DELETE FROM user_hours WHERE guild_id = ?`;
-        connection.query(sql, [guildId], (err, result) => {
-            if (err) {
-                console.error("Erreur lors de la réinitialisation des heures:", err);
-                return message.reply("Une erreur est survenue lors de la réinitialisation des heures.");
-            }
+        // Demander confirmation à l'admin
+        message.reply("Êtes-vous sûr de vouloir réinitialiser toutes les heures ? Répondez **oui** dans les 30 secondes pour confirmer.")
+            .then(() => {
+                // Création d'un filtre pour ne prendre en compte que la réponse de l'admin
+                const filter = response => 
+                    response.author.id === message.author.id && response.content.toLowerCase() === "oui";
     
-            message.reply("Les heures des membres ont été réinitialisées.");
-            
-            // Envoyer un message dans le canal de log si configuré
-            if (guildData.settings.logChannel) {
-                const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
-                if (logChannel) logChannel.send("Les heures des membres ont été réinitialisées.");
-            }
-        });
-    }
+                // Attendre une réponse pendant 30 secondes
+                message.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] })
+                    .then(() => {
+                        // Exécuter la requête SQL pour supprimer les heures des membres
+                        const sql = `DELETE FROM user_hours WHERE guild_id = ?`;
+                        connection.query(sql, [guildId], (err, result) => {
+                            if (err) {
+                                console.error("Erreur lors de la réinitialisation des heures:", err);
+                                return message.reply("Une erreur est survenue lors de la réinitialisation des heures.");
+                            }
+    
+                            message.reply("Les heures des membres ont été réinitialisées.");
+    
+                            // Envoyer un message dans le canal de log si configuré
+                            if (guildData.settings.logChannel) {
+                                const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
+                                if (logChannel) logChannel.send("Les heures des membres ont été réinitialisées.");
+                            }
+                        });
+                    })
+                    .catch(() => {
+                        message.reply("Réinitialisation annulée. Vous n'avez pas confirmé dans le temps imparti.");
+                    });
+            });
+    }    
 });
 
 client.login(process.env.BOT_TOKEN);
