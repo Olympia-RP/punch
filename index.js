@@ -126,7 +126,7 @@ client.on('messageCreate', async (message) => {
     let guildData = await loadData(guildId);
 
     if (message.content === '.clock') {
-        message.reply('Commandes: .clockin, .clockout, .clockview, .clockshow, .clockset log <channelId>, .clockset role <roleId>');
+        message.reply('Commandes: .clockin, .clockout, .clockview, .clockshow, .clockset log <channelId>, .clockset role <roleId>, .clockset reset');
     }
 
     if (message.content === '.clockin') {
