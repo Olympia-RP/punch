@@ -163,24 +163,29 @@ client.on('messageCreate', async (message) => {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
         }
-
+    
         const userId = message.author.id;
         const entry = guildData.hours[userId]?.find(entry => entry.clockOut === null);
-        if (!entry) return message.reply("Vous n'êtes pas pointé.");
-
+        
+        // Vérifier si l'utilisateur a déjà effectué un clockout
+        if (!entry) {
+            return message.reply("Vous n'êtes pas actuellement pointé. Veuillez d'abord utiliser .clockin.");
+        }
+    
         // Utilisation de moment pour formater la date de manière correcte
         const clockOut = moment().format('YYYY-MM-DD HH:mm:ss');
-
+        
         entry.clockOut = clockOut;
         saveData(guildId, guildData);
-
+    
         message.reply(`Vous êtes sorti à ${clockOut}.`);
-
+    
         if (guildData.settings.logChannel) {
             const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
             if (logChannel) logChannel.send(`<@${userId}> a quitté à ${clockOut}.`);
         }
     }
+    
 
     const formatDate = (dateString) => {
         if (!dateString) return 'En cours';
