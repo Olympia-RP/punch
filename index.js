@@ -195,7 +195,7 @@ client.on('messageCreate', async (message) => {
     
 
     if (message.content.startsWith('.clockset log')) {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)  || message.author.id !== botOwnerId) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
 
@@ -211,7 +211,7 @@ client.on('messageCreate', async (message) => {
     }
 
     if (message.content.startsWith('.clockset role')) {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)  || message.author.id !== botOwnerId) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
 
@@ -224,6 +224,52 @@ client.on('messageCreate', async (message) => {
         guildData.settings.allowedRole = roleId;
         saveData(guildId, guildData);
         message.reply(`Le rôle autorisé a été défini sur ${role.name}.`);
+    }
+
+    if (message.content === '.clockset reset') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
+        }
+    
+        // Demander la confirmation
+        const confirmationMessage = await message.reply("Êtes-vous sûr de vouloir réinitialiser toutes les heures pour tous les membres ? Tapez 'O' pour confirmer.");
+    
+        // Attendre la réponse de l'utilisateur
+        const filter = (response) => {
+            return response.author.id === message.author.id && response.content.toUpperCase() === 'O';
+        };
+    
+        try {
+            // Attendre 30 secondes pour la confirmation
+            const collected = await message.channel.awaitMessages({
+                filter,
+                max: 1,
+                time: 30000,
+                errors: ['time'],
+            });
+    
+            // Réinitialiser les heures si la confirmation est reçue
+            let guildData = loadData(message.guild.id);
+            guildData.hours = {};  // Réinitialiser les heures de tous les membres
+            saveData(message.guild.id, guildData);
+    
+            // Log de la réinitialisation
+            if (guildData.settings.logChannel) {
+                const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
+                if (logChannel) {
+                    logChannel.send(`🔄 **Réinitialisation des heures de tous les membres** effectuée par <@${message.author.id}> (${message.author.tag}).`);
+                }
+            }
+    
+            message.reply("Toutes les heures ont été réinitialisées pour tous les membres.");
+    
+        } catch (err) {
+            // Si aucune réponse n'est reçue dans le délai, annuler l'action
+            message.reply("Réinitialisation annulée, aucune confirmation reçue.");
+        } finally {
+            // Supprimer le message de confirmation
+            confirmationMessage.delete().catch(() => {});
+        }
     }
 
     if (message.content === '.invite') {
