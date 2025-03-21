@@ -140,19 +140,18 @@ client.on('messageCreate', async (message) => {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) || message.author.id !== botOwnerId) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
+    
         // Recharger les données depuis le fichier
-        loadData(); 
+        let guildData = loadData(message.guild.id);
     
-        const guildId = message.guild.id;
-    
-        if (!data[guildId] || !data[guildId].hours) {
+        if (!guildData.hours) {
             return message.reply("Aucune donnée d'heures enregistrée sur ce serveur.");
         }
     
         let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
     
-        Object.keys(data[guildId].hours).forEach(userId => {
-            const entries = data[guildId].hours[userId];
+        Object.keys(guildData.hours).forEach(userId => {
+            const entries = guildData.hours[userId];
             let totalMilliseconds = 0;
             let userHistory = `**Historique des heures de <@${userId}> :**\n`;
     
@@ -191,8 +190,9 @@ client.on('messageCreate', async (message) => {
         }
     
         message.reply(response);
-       
+        
     }
+    
 
     if (message.content.startsWith('.clockset log')) {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
