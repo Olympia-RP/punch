@@ -16,7 +16,7 @@ const DATA_DIR = './data/';
 const botOwnerId = process.env.BOT_OWNER_ID; // Stocke l'ID du propriétaire du bot dans une variable d'environnement
 // Connexion à la base de données
 const connection = mysql.createConnection({
-    host: 'localhost',    // Hôte de la base de données
+    host: 'gamerhostinghub.ca',    // Hôte de la base de données
     user: 'u49_8Po4ISpvKu',         // Utilisateur MySQL
     password: '^a7NTdS5CE=2=etIktAezbyy', // Mot de passe
     database: 's49_punch'  // Nom de la base de données
