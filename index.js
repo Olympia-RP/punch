@@ -350,6 +350,7 @@ client.on('messageCreate', async (message) => {
 
     if (message.content === '.clockset reset') {
         // Vérifier si l'utilisateur a les permissions nécessaires
+        const userId = message.mentions.users.first()?.id || message.author.id;
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
