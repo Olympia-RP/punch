@@ -323,7 +323,7 @@ client.on('messageCreate', async (message) => {
     
         // Exécuter la requête SQL pour supprimer les heures des membres
         const sql = `DELETE FROM user_hours WHERE guild_id = ?`;
-        db.query(sql, [guildId], (err, result) => {
+        connection.query(sql, [guildId], (err, result) => {
             if (err) {
                 console.error("Erreur lors de la réinitialisation des heures:", err);
                 return message.reply("Une erreur est survenue lors de la réinitialisation des heures.");
