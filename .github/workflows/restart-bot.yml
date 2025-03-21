@@ -17,3 +17,5 @@ jobs:
           -H "Authorization: Bearer ${{ secrets.PTERO_API_KEY }}" \
           -H "Content-Type: application/json" \
           -d '{"signal": "restart"}'
+
+          
