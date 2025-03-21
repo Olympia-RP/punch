@@ -226,7 +226,7 @@ client.on('messageCreate', async (message) => {
                 // Affiche les heures pour chaque utilisateur
                 Object.keys(userHours).forEach(userId => {
                     const user = message.guild.members.cache.get(userId);
-                    response += `\n**Historique des heures de ${user ? user.user.tag : userId}** :\n`;
+                    response += `\n**Historique des heures de <@${userId}>** :\n`;
 
                     let totalWorkedMinutes = 0;
                     userHours[userId].forEach(entry => {
