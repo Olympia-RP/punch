@@ -56,7 +56,7 @@ client.on('messageCreate', async (message) => {
         message.reply('Commandes: .clockin, .clockout, .clockview, .clockshow, .clockset log <channelId>, .clockset role <roleId>');
     }
 
-    
+
     if (message.content === '.clockin') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
@@ -164,7 +164,19 @@ client.on('messageCreate', async (message) => {
         guildData.settings.allowedRole = roleId;
         saveData(guildId, guildData);
         message.reply(`Le rôle autorisé a été défini sur ${role.name}.`);
+
+    if (message.content === '.invite') {
+        if (message.author.id !== botOwnerId) {
+            return message.reply("Seul l'owner du bot peut utiliser cette commande.")
+                .then(msg => setTimeout(() => msg.delete().catch(() => {}), 30000));
+        }
+    
+        const inviteLink = `https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=8&scope=bot`;
+        message.reply(`🔗 **Lien d'invitation du bot :**\n${inviteLink}`)
+            .then(msg => setTimeout(() => msg.delete().catch(() => {}), 30000));
     }
+
+    
 });
 
 client.login(process.env.TOKEN);
