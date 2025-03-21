@@ -11,138 +11,112 @@ const client = new Client({
     ]
 });
 
-process.on('SIGINT', async () => {
-    console.log('Arrêt du bot...');
-    await client.destroy();
-    process.exit(0);
-});
+const DATA_DIR = './data/';
 
-let data = {};
+// Vérifier si le dossier "data" existe, sinon le créer
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
-function loadData() {
-    if (fs.existsSync('data.json')) {
+// Fonction pour charger les données d'un serveur spécifique
+function loadData(guildId) {
+    const filePath = `${DATA_DIR}${guildId}.json`;
+    if (fs.existsSync(filePath)) {
         try {
-            data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
-            console.log("✅ Data chargée :", data);  // Ajoute cette ligne
+            return JSON.parse(fs.readFileSync(filePath, 'utf8'));
         } catch (error) {
-            console.error('❌ Erreur de parsing JSON:', error);
+            console.error(`❌ Erreur de parsing JSON pour ${guildId}:`, error);
+            return { settings: { logChannel: null, allowedRole: null }, hours: {} };
         }
     } else {
-        console.log("⚠️ Aucun fichier data.json trouvé, création d'un nouveau.");
+        console.log(`⚠️ Aucun fichier trouvé pour ${guildId}, création d'un nouveau.`);
+        return { settings: { logChannel: null, allowedRole: null }, hours: {} };
     }
 }
 
-
-function saveData() {
-    fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
+// Fonction pour sauvegarder les données d'un serveur spécifique
+function saveData(guildId, guildData) {
+    const filePath = `${DATA_DIR}${guildId}.json`;
+    fs.writeFileSync(filePath, JSON.stringify(guildData, null, 2));
 }
 
+// Charger les données pour chaque serveur lors de l'événement guildCreate
 client.on('guildCreate', (guild) => {
-    if (!data[guild.id]) {
-        data[guild.id] = {
-            settings: { logChannel: null, allowedRole: null },
-            hours: {}
-        };
-        saveData();
-    }
+    const guildData = loadData(guild.id);
+    saveData(guild.id, guildData);
 });
 
 client.on('messageCreate', async (message) => {
     if (!message.guild || message.author.bot) return;
-    
+
     const guildId = message.guild.id;
-    if (!data[guildId]) {
-        data[guildId] = { settings: { logChannel: null, allowedRole: null }, hours: {} };
-    }
-    
-    const guildData = data[guildId];
-    
+    let guildData = loadData(guildId);
+
     if (message.content === '.clock') {
         message.reply('Commandes: .clockin, .clockout, .clockview, .clockshow, .clockset log <channelId>, .clockset role <roleId>');
     }
 
-    // Commande .clockin
+    
     if (message.content === '.clockin') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
         }
-        
+
         const userId = message.author.id;
-        if (!guildData.hours[userId]) {
-            guildData.hours[userId] = [];
-        }
-        
+        if (!guildData.hours[userId]) guildData.hours[userId] = [];
+
         if (guildData.hours[userId].some(entry => entry.clockOut === null)) {
             return message.reply("Vous êtes déjà pointé.");
         }
-        
+
         const now = new Date().toLocaleString();
         guildData.hours[userId].push({ clockIn: now, clockOut: null });
-        saveData();
-        
+        saveData(guildId, guildData);
+
         message.reply(`Vous êtes maintenant pointé à ${now}.`);
-        
-        // ✅ ENVOYER LE MESSAGE DANS LE CANAL DE LOGS
+
         if (guildData.settings.logChannel) {
             const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
-            if (logChannel) {
-                logChannel.send(`<@${userId}> a pointé à ${now}.`);
-            } else {
-                console.error(`Canal de log introuvable: ${guildData.settings.logChannel}`);
-            }
+            if (logChannel) logChannel.send(`<@${userId}> a pointé à ${now}.`);
         }
     }
 
-    // Commande .clockout
+
     if (message.content === '.clockout') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
         }
-        
+
         const userId = message.author.id;
         const entry = guildData.hours[userId]?.find(entry => entry.clockOut === null);
         if (!entry) return message.reply("Vous n'êtes pas pointé.");
-        
+
         entry.clockOut = new Date().toLocaleString();
-        saveData();
-        
+        saveData(guildId, guildData);
+
         message.reply(`Vous êtes sorti à ${entry.clockOut}.`);
-        
-        // ✅ ENVOYER LE MESSAGE DANS LE CANAL DE LOGS
+
         if (guildData.settings.logChannel) {
             const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
-            if (logChannel) {
-                logChannel.send(`<@${userId}> a quitté à ${entry.clockOut}.`);
-            } else {
-                console.error(`Canal de log introuvable: ${guildData.settings.logChannel}`);
-            }
+            if (logChannel) logChannel.send(`<@${userId}> a quitté à ${entry.clockOut}.`);
         }
     }
 
-
     if (message.content === '.clockview') {
-        // Recharger les données depuis le fichier
-        loadData(); 
-    
-        const guildId = message.guild.id;
+        guildData = loadData(guildId);
+
         const userId = message.author.id;
-    
-        // Vérifie si les données existent bien
-        if (!data[guildId] || !data[guildId].hours || !data[guildId].hours[userId]) {
-            return message.reply("Aucune heure enregistrée.");
-        }
-    
-        const entries = data[guildId].hours[userId];
-    
+        if (!guildData.hours[userId]) return message.reply("Aucune heure enregistrée.");
+
+        const entries = guildData.hours[userId];
         let totalMilliseconds = 0;
         let response = `📋 **Historique des heures de <@${userId}>** :\n`;
-    
+
         entries.forEach(e => {
             response += `- 🕐 **Entrée** : ${e.clockIn}, `;
             if (e.clockOut) {
                 response += `**Sortie** : ${e.clockOut}\n`;
-    
-                // Calcul du total en millisecondes
+
                 const startTime = new Date(e.clockIn).getTime();
                 const endTime = new Date(e.clockOut).getTime();
                 if (!isNaN(startTime) && !isNaN(endTime)) {
@@ -152,79 +126,13 @@ client.on('messageCreate', async (message) => {
                 response += "**Sortie** : ⏳ Toujours en service\n";
             }
         });
-    
-        // Convertir le total en heures et minutes
+
         const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
         const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
-    
         response += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m`;
-    
-        message.reply(response);
 
-    }
-      
-    
-
-    if (message.content === '.clockshow') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
-            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
-        }
-        // Recharger les données depuis le fichier
-        loadData(); 
-    
-        const guildId = message.guild.id;
-    
-        if (!data[guildId] || !data[guildId].hours) {
-            return message.reply("Aucune donnée d'heures enregistrée sur ce serveur.");
-        }
-    
-        let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
-    
-        Object.keys(data[guildId].hours).forEach(userId => {
-            const entries = data[guildId].hours[userId];
-            let totalMilliseconds = 0;
-            let userHistory = `**Historique des heures de <@${userId}> :**\n`;
-    
-            entries.forEach(e => {
-                const clockIn = e.clockIn;
-                const clockOut = e.clockOut;
-                userHistory += `- 🕐 **Entrée** : ${clockIn}, `;
-                if (clockOut) {
-                    userHistory += `**Sortie** : ${clockOut}\n`;
-    
-                    // Calcul du total en millisecondes
-                    const startTime = new Date(clockIn).getTime();
-                    const endTime = new Date(clockOut).getTime();
-                    if (!isNaN(startTime) && !isNaN(endTime)) {
-                        totalMilliseconds += (endTime - startTime);
-                    }
-                } else {
-                    userHistory += "**Sortie** : ⏳ Toujours en service\n";
-                }
-            });
-    
-            // Convertir le total en heures et minutes
-            const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
-            const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
-    
-            // Ajouter le total à l'historique
-            userHistory += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m\n\n`;
-    
-            // Ajouter l'historique de cet utilisateur à la réponse générale
-            response += userHistory;
-        });
-    
-        // Si aucune donnée n'est trouvée, renvoyer un message d'erreur
-        if (response === `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`) {
-            return message.reply("Aucun membre n'a encore enregistré d'heures.");
-        }
-    
         message.reply(response);
-       
     }
-    
-    
-    
 
     if (message.content.startsWith('.clockset log')) {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
@@ -234,13 +142,11 @@ client.on('messageCreate', async (message) => {
         const args = message.content.split(' ');
         const channelId = args[2];
         const channel = message.guild.channels.cache.get(channelId);
-        
-        if (!channel) {
-            return message.reply("Le canal spécifié est invalide.");
-        }
+
+        if (!channel) return message.reply("Le canal spécifié est invalide.");
 
         guildData.settings.logChannel = channelId;
-        saveData();
+        saveData(guildId, guildData);
         message.reply(`Le canal de logs a été défini sur ${channel.name}.`);
     }
 
@@ -252,13 +158,11 @@ client.on('messageCreate', async (message) => {
         const args = message.content.split(' ');
         const roleId = args[2];
         const role = message.guild.roles.cache.get(roleId);
-        
-        if (!role) {
-            return message.reply("Le rôle spécifié est invalide.");
-        }
+
+        if (!role) return message.reply("Le rôle spécifié est invalide.");
 
         guildData.settings.allowedRole = roleId;
-        saveData();
+        saveData(guildId, guildData);
         message.reply(`Le rôle autorisé a été défini sur ${role.name}.`);
     }
 });
