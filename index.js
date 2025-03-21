@@ -135,7 +135,7 @@ client.on('messageCreate', async (message) => {
         const entries = data[guildId].hours[userId];
     
         let totalMilliseconds = 0;
-        let response = `📋 **Historique des heures de ${message.author.username}** :\n`;
+        let response = `📋 **Historique des heures de <@${userId}>** :\n`;
     
         entries.forEach(e => {
             response += `- 🕐 **Entrée** : ${e.clockIn}, `;
