@@ -266,23 +266,41 @@ client.on('messageCreate', async (message) => {
                     console.error('Erreur lors de la récupération des heures:', err);
                     return message.reply('❌ Une erreur est survenue.');
                 }
-
+    
                 if (results.length === 0) {
                     return message.reply(`📭 Aucun historique pour <@${userId}>.`);
                 }
-
+    
                 let response = `📊 **Historique des heures de <@${userId}>** :\n`;
-
+    
+                let totalWorkedMinutes = 0; // Variable pour accumuler le total des minutes travaillées
+    
                 results.forEach(row => {
-                    const entree = formatDate(row.clock_in);
-                    const sortie = formatDate(row.clock_out);
-                    response += `🕐 Entrée : ${entree}, Sortie : ${sortie}\n`;
+                    const clockIn = moment(row.clock_in);  // Moment de l'entrée
+                    const clockOut = row.clock_out ? moment(row.clock_out) : null;  // Moment de la sortie (peut être null)
+    
+                    // Affichage des heures d'entrée et de sortie
+                    response += `🕐 Entrée : ${clockIn.format('YYYY-MM-DD HH:mm')}, Sortie : ${clockOut ? clockOut.format('YYYY-MM-DD HH:mm') : 'En cours'}\n`;
+    
+                    // Calcul du temps travaillé si la sortie est définie
+                    if (clockOut) {
+                        const diffMinutes = clockOut.diff(clockIn, 'minutes');
+                        totalWorkedMinutes += diffMinutes;  // Ajout au total des minutes travaillées
+                    }
                 });
-
+    
+                // Calcul des heures et minutes totales
+                const hours = Math.floor(totalWorkedMinutes / 60);
+                const minutes = totalWorkedMinutes % 60;
+    
+                // Affichage du total des heures travaillées
+                response += `⏳ **Total travaillé** : ${hours}h ${minutes}m\n`;
+    
                 message.reply(response);
             }
         );
     }
+    
 
     // Commande .clockset log
     if (message.content.startsWith('.clockset log')) {
