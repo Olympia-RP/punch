@@ -17,7 +17,8 @@ Punch est un bot Discord permettant de gérer les pointages des utilisateurs. Il
 
 3. Copier le fichier `.env.exemple` en `.env` à la racine du projet et modifier la variables d'environnement :
     ```env
-    TOKEN=your_discord_bot_token
+    TOKEN=your_discord_bot_token        # Discord bot token
+    BOT_OWNER_ID=                       # Discord ID of the bot owner
     ```
 
 ## Utilisation
@@ -36,10 +37,12 @@ Punch est un bot Discord permettant de gérer les pointages des utilisateurs. Il
     - `.clockshow` : Affichez l'historique des heures pour tous les utilisateurs.
     - `.clockset log <channel_id>` : Définissez le canal de logs (administrateur uniquement).
     - `.clockset role <role_id>` : Définissez le rôle autorisé à utiliser les commandes de pointage (administrateur uniquement).
+    - `.clockset reset` : reset tout les membre avec leur heure tout en gardant le canal log & role intact.
+    - `.invite` : Affiche le lien d'invitation du bot.
 
 ## Configuration
 
-- Le fichier `data.json` est utilisé pour stocker les données des utilisateurs et les paramètres du bot. Il est créé automatiquement si il n'existe pas.
+- Le fichier `data/IDGUILD.json` est utilisé pour stocker les données des utilisateurs et les paramètres du bot. Il est créé automatiquement si il n'existe pas.
 
 ## Auteurs
 
