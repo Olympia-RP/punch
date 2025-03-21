@@ -134,6 +134,64 @@ client.on('messageCreate', async (message) => {
         message.reply(response);
     }
 
+    if (message.content === '.clockshow') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
+            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
+        }
+        // Recharger les données depuis le fichier
+        loadData(); 
+    
+        const guildId = message.guild.id;
+    
+        if (!data[guildId] || !data[guildId].hours) {
+            return message.reply("Aucune donnée d'heures enregistrée sur ce serveur.");
+        }
+    
+        let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
+    
+        Object.keys(data[guildId].hours).forEach(userId => {
+            const entries = data[guildId].hours[userId];
+            let totalMilliseconds = 0;
+            let userHistory = `**Historique des heures de <@${userId}> :**\n`;
+    
+            entries.forEach(e => {
+                const clockIn = e.clockIn;
+                const clockOut = e.clockOut;
+                userHistory += `- 🕐 **Entrée** : ${clockIn}, `;
+                if (clockOut) {
+                    userHistory += `**Sortie** : ${clockOut}\n`;
+    
+                    // Calcul du total en millisecondes
+                    const startTime = new Date(clockIn).getTime();
+                    const endTime = new Date(clockOut).getTime();
+                    if (!isNaN(startTime) && !isNaN(endTime)) {
+                        totalMilliseconds += (endTime - startTime);
+                    }
+                } else {
+                    userHistory += "**Sortie** : ⏳ Toujours en service\n";
+                }
+            });
+    
+            // Convertir le total en heures et minutes
+            const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
+            const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+    
+            // Ajouter le total à l'historique
+            userHistory += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m\n\n`;
+    
+            // Ajouter l'historique de cet utilisateur à la réponse générale
+            response += userHistory;
+        });
+    
+        // Si aucune donnée n'est trouvée, renvoyer un message d'erreur
+        if (response === `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`) {
+            return message.reply("Aucun membre n'a encore enregistré d'heures.");
+        }
+    
+        message.reply(response);
+       
+    }
+
     if (message.content.startsWith('.clockset log')) {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
@@ -165,7 +223,7 @@ client.on('messageCreate', async (message) => {
         saveData(guildId, guildData);
         message.reply(`Le rôle autorisé a été défini sur ${role.name}.`);
     }
-    
+
     if (message.content === '.invite') {
         if (message.author.id !== botOwnerId) {
             return message.reply("Seul l'owner du bot peut utiliser cette commande.")
