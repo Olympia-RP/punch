@@ -180,6 +180,7 @@ client.on('messageCreate', async (message) => {
         Object.keys(data[guildId].hours).forEach(userId => {
             const entries = data[guildId].hours[userId];
             let totalMilliseconds = 0;
+            let isCurrentlyClockedIn = false;
     
             entries.forEach(e => {
                 if (e.clockOut) {
@@ -188,17 +189,21 @@ client.on('messageCreate', async (message) => {
                     if (!isNaN(startTime) && !isNaN(endTime)) {
                         totalMilliseconds += (endTime - startTime);
                     }
+                } else {
+                    isCurrentlyClockedIn = true; // L'utilisateur est encore en service
                 }
             });
     
             const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
             const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
     
-            response += `- <@${userId}> : **${totalHours}h ${totalMinutes}m**\n`;
+            // Ajouter un message différent si l'utilisateur est encore "clocké"
+            response += `- <@${userId}> : **${totalHours}h ${totalMinutes}m** ${isCurrentlyClockedIn ? "(En service)" : ""}\n`;
         });
     
         message.reply(response);
     }
+    
     
 
     if (message.content.startsWith('.clockset log')) {
