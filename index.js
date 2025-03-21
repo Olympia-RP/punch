@@ -14,7 +14,6 @@ const client = new Client({
 
 const DATA_DIR = './data/';
 const botOwnerId = process.env.BOT_OWNER_ID; // Stocke l'ID du propriétaire du bot dans une variable d'environnement
-
 // Connexion à la base de données
 const connection = mysql.createConnection({
     host: 'gamerhostinghub.ca',    // Hôte de la base de données
@@ -34,12 +33,6 @@ connection.connect((err) => {
 // Vérifier si le dossier "data" existe, sinon le créer
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-// Fonction pour formater la date en MySQL-compatible (YYYY-MM-DD HH:MM:SS)
-function formatDateToMySQL() {
-    const date = new Date();
-    return date.toISOString().slice(0, 19).replace('T', ' ');  // Format: 'YYYY-MM-DD HH:MM:SS'
 }
 
 // Fonction pour charger les données d'un serveur spécifique depuis MySQL
@@ -152,7 +145,7 @@ client.on('messageCreate', async (message) => {
             return message.reply("Vous êtes déjà pointé.");
         }
 
-        const now = formatDateToMySQL();  // Utiliser la nouvelle fonction pour formater la date
+        const now = new Date().toLocaleString();
         guildData.hours[userId].push({ clockIn: now, clockOut: null });
         saveData(guildId, guildData);
 
@@ -173,7 +166,7 @@ client.on('messageCreate', async (message) => {
         const entry = guildData.hours[userId]?.find(entry => entry.clockOut === null);
         if (!entry) return message.reply("Vous n'êtes pas pointé.");
 
-        entry.clockOut = formatDateToMySQL();  // Utiliser la nouvelle fonction pour formater la date
+        entry.clockOut = new Date().toLocaleString();
         saveData(guildId, guildData);
 
         message.reply(`Vous êtes sorti à ${entry.clockOut}.`);
@@ -184,7 +177,122 @@ client.on('messageCreate', async (message) => {
         }
     }
 
-    // (Les autres parties de ton code restent inchangées)
+    if (message.content === '.clockview') {
+        guildData = await loadData(guildId);
+
+        const userId = message.author.id;
+        if (!guildData.hours[userId]) return message.reply("Aucune heure enregistrée.");
+
+        const entries = guildData.hours[userId];
+        let totalMilliseconds = 0;
+        let response = `📋 **Historique des heures de <@${userId}>** :\n`;
+
+        entries.forEach(e => {
+            response += `- 🕐 **Entrée** : ${e.clockIn}, `;
+            if (e.clockOut) {
+                response += `**Sortie** : ${e.clockOut}\n`;
+
+                const startTime = new Date(e.clockIn).getTime();
+                const endTime = new Date(e.clockOut).getTime();
+                if (!isNaN(startTime) && !isNaN(endTime)) {
+                    totalMilliseconds += (endTime - startTime);
+                }
+            } else {
+                response += "**Sortie** : ⏳ Toujours en service\n";
+            }
+        });
+
+        const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
+        const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+        response += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m`;
+
+        message.reply(response);
+    }
+
+    if (message.content === '.clockshow') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
+            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
+        }
+
+        let guildData = loadData(message.guild.id);
+
+        if (!guildData.hours) {
+            return message.reply("Aucune donnée d'heures enregistrée sur ce serveur.");
+        }
+
+        let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
+
+        Object.keys(guildData.hours).forEach(userId => {
+            const entries = guildData.hours[userId];
+            let totalMilliseconds = 0;
+            let userHistory = `**Historique des heures de <@${userId}> :**\n`;
+
+            entries.forEach(e => {
+                const clockIn = e.clockIn;
+                const clockOut = e.clockOut;
+                userHistory += `- 🕐 **Entrée** : ${clockIn}, `;
+                if (clockOut) {
+                    userHistory += `**Sortie** : ${clockOut}\n`;
+
+                    const startTime = new Date(clockIn).getTime();
+                    const endTime = new Date(clockOut).getTime();
+                    if (!isNaN(startTime) && !isNaN(endTime)) {
+                        totalMilliseconds += (endTime - startTime);
+                    }
+                } else {
+                    userHistory += "**Sortie** : ⏳ Toujours en service\n";
+                }
+            });
+
+            const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
+            const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+
+            userHistory += `\n⏳ **Total travaillé** : ${totalHours}h ${totalMinutes}m\n\n`;
+
+            response += userHistory;
+        });
+
+        if (response === `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`) {
+            return message.reply("Aucun membre n'a encore enregistré d'heures.");
+        }
+
+        message.reply(response);
+    }
+
+    // Commande .clockset log
+    if (message.content.startsWith('.clockset log')) {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
+            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
+        }
+
+        const args = message.content.split(' ');
+        const channelId = args[2];
+        const channel = message.guild.channels.cache.get(channelId);
+
+        if (!channel) return message.reply("Le canal spécifié est invalide.");
+
+        guildData.settings.logChannel = channelId;
+        saveData(guildId, guildData);
+        message.reply(`Le canal de logs a été défini sur ${channel.name}.`);
+    }
+
+    // Commande .clockset role
+    if (message.content.startsWith('.clockset role')) {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
+            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
+        }
+
+        const args = message.content.split(' ');
+        const roleId = args[2];
+        const role = message.guild.roles.cache.get(roleId);
+
+        if (!role) return message.reply("Le rôle spécifié est invalide.");
+
+        guildData.settings.allowedRole = roleId;
+        saveData(guildId, guildData);
+
+        message.reply(`Le rôle ${role.name} a été défini comme rôle autorisé pour utiliser les commandes de pointage.`);
+    }
 });
 
-client.login(process.env.TOKEN);
+client.login(process.env.BOT_TOKEN);
