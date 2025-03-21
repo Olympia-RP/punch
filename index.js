@@ -4,7 +4,6 @@ const mysql = require('mysql2');
 const moment = require('moment');
 require('dotenv').config();
 
-
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -14,14 +13,13 @@ const client = new Client({
     ]
 });
 
-
 const botOwnerId = process.env.BOT_OWNER_ID; // Stocke l'ID du propriétaire du bot dans une variable d'environnement
 // Connexion à la base de données
 const connection = mysql.createConnection({
-    host: 'gamerhostinghub.ca',    // Hôte de la base de données
-    user: 'u49_8Po4ISpvKu',         // Utilisateur MySQL
-    password: '^a7NTdS5CE=2=etIktAezbyy', // Mot de passe
-    database: 's49_punch'  // Nom de la base de données
+    host: process.env.DB_HOST, // Utilisation d'une variable d'environnement pour la sécurité
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
 });
 
 connection.connect((err) => {
@@ -112,7 +110,6 @@ function saveData(guildId, guildData) {
     });
 }
 
-
 client.on('guildCreate', async (guild) => {
     try {
         const guildData = await loadData(guild.id);
@@ -172,8 +169,8 @@ client.on('messageCreate', async (message) => {
         const entry = guildData.hours[userId]?.find(entry => entry.clockOut === null);
         if (!entry) return message.reply("Vous n'êtes pas pointé.");
     
-        // Formater la date de sortie au format MySQL 'YYYY-MM-DD HH:MM:SS'
-        const clockOut = new Date().toISOString().replace("T", " ").split(".")[0]; // format: 'YYYY-MM-DD HH:MM:SS'
+        // Utilisation de moment pour formater la date de manière correcte
+        const clockOut = moment().format('YYYY-MM-DD HH:mm:ss');
         
         entry.clockOut = clockOut;
         saveData(guildId, guildData);
@@ -185,7 +182,6 @@ client.on('messageCreate', async (message) => {
             if (logChannel) logChannel.send(`<@${userId}> a quitté à ${clockOut}.`);
         }
     }
-    
 
     const formatDate = (dateString) => {
         if (!dateString) return 'En cours';
@@ -200,66 +196,63 @@ client.on('messageCreate', async (message) => {
             minute: '2-digit' 
         }).replace(',', ''); // Enlève la virgule pour un affichage propre
     };
-    
-    client.on('messageCreate', async (message) => {
-        if (message.content === '.clockshow') {
-            const guildId = message.guild.id;
-            connection.query(
-                'SELECT user_id, clock_in, clock_out FROM user_hours WHERE guild_id = ?',
-                [guildId],
-                (err, results) => {
-                    if (err) {
-                        console.error('Erreur lors de la récupération des heures:', err);
-                        return message.reply('❌ Une erreur est survenue.');
-                    }
-    
-                    if (results.length === 0) {
-                        return message.reply('📭 Aucun membre n’a enregistré d’heures.');
-                    }
-    
-                    let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
-    
-                    results.forEach(row => {
-                        const entree = formatDate(row.clock_in);
-                        const sortie = formatDate(row.clock_out);
-                        response += `🕐 **<@${row.user_id}>** : Entrée : ${entree}, Sortie : ${sortie}\n`;
-                    });
-    
-                    message.reply(response);
+
+    // Affichage de l'historique des heures
+    if (message.content === '.clockshow') {
+        connection.query(
+            'SELECT user_id, clock_in, clock_out FROM user_hours WHERE guild_id = ?',
+            [guildId],
+            (err, results) => {
+                if (err) {
+                    console.error('Erreur lors de la récupération des heures:', err);
+                    return message.reply('❌ Une erreur est survenue.');
                 }
-            );
-        }
     
-        if (message.content.startsWith('.clockview')) {
-            const userId = message.mentions.users.first()?.id || message.author.id;
-            connection.query(
-                'SELECT clock_in, clock_out FROM user_hours WHERE user_id = ? AND guild_id = ?',
-                [userId, message.guild.id],
-                (err, results) => {
-                    if (err) {
-                        console.error('Erreur lors de la récupération des heures:', err);
-                        return message.reply('❌ Une erreur est survenue.');
-                    }
-    
-                    if (results.length === 0) {
-                        return message.reply(`📭 Aucun historique pour <@${userId}>.`);
-                    }
-    
-                    let response = `📊 **Historique des heures de <@${userId}>** :\n`;
-    
-                    results.forEach(row => {
-                        const entree = formatDate(row.clock_in);
-                        const sortie = formatDate(row.clock_out);
-                        response += `🕐 Entrée : ${entree}, Sortie : ${sortie}\n`;
-                    });
-    
-                    message.reply(response);
+                if (results.length === 0) {
+                    return message.reply('📭 Aucun membre n’a enregistré d’heures.');
                 }
-            );
-        }
-    });
     
+                let response = `📊 **Historique des heures des membres sur ${message.guild.name}** :\n`;
     
+                results.forEach(row => {
+                    const entree = formatDate(row.clock_in);
+                    const sortie = formatDate(row.clock_out);
+                    response += `🕐 **<@${row.user_id}>** : Entrée : ${entree}, Sortie : ${sortie}\n`;
+                });
+    
+                message.reply(response);
+            }
+        );
+    }
+
+    // Affichage des heures d'un utilisateur
+    if (message.content.startsWith('.clockview')) {
+        const userId = message.mentions.users.first()?.id || message.author.id;
+        connection.query(
+            'SELECT clock_in, clock_out FROM user_hours WHERE user_id = ? AND guild_id = ?',
+            [userId, message.guild.id],
+            (err, results) => {
+                if (err) {
+                    console.error('Erreur lors de la récupération des heures:', err);
+                    return message.reply('❌ Une erreur est survenue.');
+                }
+    
+                if (results.length === 0) {
+                    return message.reply(`📭 Aucun historique pour <@${userId}>.`);
+                }
+    
+                let response = `📊 **Historique des heures de <@${userId}>** :\n`;
+    
+                results.forEach(row => {
+                    const entree = formatDate(row.clock_in);
+                    const sortie = formatDate(row.clock_out);
+                    response += `🕐 Entrée : ${entree}, Sortie : ${sortie}\n`;
+                });
+    
+                message.reply(response);
+            }
+        );
+    }
 
     // Commande .clockset log
     if (message.content.startsWith('.clockset log')) {
@@ -319,8 +312,6 @@ client.on('messageCreate', async (message) => {
             }
         });
     }
-    
-    
 });
 
 client.login(process.env.BOT_TOKEN);
