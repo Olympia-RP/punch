@@ -348,44 +348,30 @@ client.on('messageCreate', async (message) => {
         message.reply(`Le rôle ${role.name} a été défini comme rôle autorisé pour utiliser les commandes de pointage.`);
     }
 
-    if (message.content === '.clockset reset') {
-        // Vérifier si l'utilisateur a les permissions nécessaires
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
-            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
-        }
+    if (command === "clockset" && args[0] === "reset") {
+        const filter = (response) => 
+            response.author.id === message.author.id && response.content.toLowerCase() === "oui";
     
-        // Demander confirmation à l'admin
-        message.reply("Êtes-vous sûr de vouloir réinitialiser toutes les heures ? Répondez **oui** dans les 30 secondes pour confirmer.")
+        message.reply("Êtes-vous sûr de vouloir réinitialiser toutes les heures ? Répondez oui dans les 30 secondes pour confirmer.")
             .then(() => {
-                // Création d'un filtre pour ne prendre en compte que la réponse de l'admin
-                const filter = response => 
-                    response.author.id === message.author.id && response.content.toLowerCase() === "oui";
+                message.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ["time"] })
+                    .then(async (collected) => {
+                        await db.query("DELETE FROM work_hours"); // Réinitialise les heures
     
-                // Attendre une réponse pendant 30 secondes
-                message.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] })
-                    .then(() => {
-                        // Exécuter la requête SQL pour supprimer les heures des membres
-                        const sql = `DELETE FROM user_hours WHERE guild_id = ?`;
-                        connection.query(sql, [guildId], (err, result) => {
-                            if (err) {
-                                console.error("Erreur lors de la réinitialisation des heures:", err);
-                                return message.reply("Une erreur est survenue lors de la réinitialisation des heures.");
-                            }
+                        const confirmationMessage = `Les heures des membres ont été réinitialisées par ${message.author.tag}.`;
+                        message.reply(confirmationMessage);
     
-                            message.reply("Les heures des membres ont été réinitialisées.");
-    
-                            // Envoyer un message dans le canal de log si configuré
-                            if (guildData.settings.logChannel) {
-                                const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
-                                if (logChannel) logChannel.send("Les heures des membres ont été réinitialisées.");
-                            }
-                        });
+                        if (guildData.settings.logChannel) {
+                            const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
+                            if (logChannel) logChannel.send(confirmationMessage);
+                        }
                     })
                     .catch(() => {
-                        message.reply("Réinitialisation annulée. Vous n'avez pas confirmé dans le temps imparti.");
+                        message.reply("Réinitialisation annulée. Temps écoulé.");
                     });
             });
-    }    
+    }
+        
 });
 
 client.login(process.env.BOT_TOKEN);
