@@ -378,7 +378,7 @@ client.on('messageCreate', async (message) => {
                             // Envoyer un message dans le canal de log si configuré
                             if (guildData.settings.logChannel) {
                                 const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
-                                if (logChannel) logChannel.send("Les heures des membres ont été réinitialisées par <@${userId}>.");
+                                if (logChannel) logChannel.send(`Les heures des membres ont été réinitialisées par <@${userId}>.`);
                             }
                         });
                     })
