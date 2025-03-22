@@ -25,6 +25,12 @@ process.on('SIGTERM', () => {
     process.exit(0);
 });
 
+// Détecter la fermeture du processus (Pterodactyl, Ctrl+C, kill)
+const shutdown = () => {
+    console.log('🛑 Arrêt détecté, déconnexion immédiate du bot...');
+    client.destroy();
+    process.exit(0);
+};
 
 // Stocke l'ID du propriétaire du bot dans une variable d'environnement
 const botOwnerId = process.env.BOT_OWNER_ID; 
@@ -332,5 +338,6 @@ client.on('ready', () => {
 client.on('disconnect', () => {
     console.log('Déconnecté du serveur Discord.');
 });
-
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 client.login(process.env.BOT_TOKEN);
