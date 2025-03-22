@@ -14,8 +14,8 @@ const client = new Client({
 });
 
 
-
-const botOwnerId = process.env.BOT_OWNER_ID; // Stocke l'ID du propriétaire du bot dans une variable d'environnement
+// Stocke l'ID du propriétaire du bot dans une variable d'environnement
+const botOwnerId = process.env.BOT_OWNER_ID; 
 // Connexion à la base de données
 const connection = mysql.createConnection({
     host: process.env.DB_HOST, // Utilisation d'une variable d'environnement pour la sécurité
@@ -23,7 +23,7 @@ const connection = mysql.createConnection({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME
 });
-
+// Vérifier si la connexion à la base de données a réussi
 connection.connect((err) => {
     if (err) {
         console.error('Erreur de connexion à la base de données:', err.stack);
@@ -31,86 +31,8 @@ connection.connect((err) => {
     }
     console.log('Connecté à la base de données MySQL.');
 });
-
-// Fonction pour charger les données d'un serveur spécifique depuis MySQL
-function loadData(guildId) {
-    return new Promise((resolve, reject) => {
-        // Charger les paramètres du serveur
-        connection.query(
-            'SELECT * FROM guild_settings WHERE guild_id = ?',
-            [guildId],
-            (err, results) => {
-                if (err) {
-                    return reject(`Erreur lors du chargement des paramètres : ${err.message}`);
-                }
-                if (results.length === 0) {
-                    return resolve({ settings: { logChannel: null, allowedRole: null }, hours: {} });
-                }
-
-                const guildData = {
-                    settings: {
-                        logChannel: results[0].log_channel,
-                        allowedRole: results[0].allowed_role
-                    },
-                    hours: {}
-                };
-
-                // Charger les heures des utilisateurs
-                connection.query(
-                    'SELECT * FROM user_hours WHERE guild_id = ?',
-                    [guildId],
-                    (err, results) => {
-                        if (err) {
-                            return reject(`Erreur lors du chargement des heures : ${err.message}`);
-                        }
-
-                        results.forEach(entry => {
-                            const userId = entry.user_id;
-                            if (!guildData.hours[userId]) guildData.hours[userId] = [];
-
-                            guildData.hours[userId].push({
-                                clockIn: entry.clock_in,
-                                clockOut: entry.clock_out
-                            });
-                        });
-
-                        resolve(guildData);
-                    }
-                );
-            }
-        );
-    });
-}
-
-// Fonction pour sauvegarder les données dans la base de données MySQL
-function saveData(guildId, guildData) {
-    // Sauvegarder les paramètres du serveur
-    connection.query(
-        'INSERT INTO guild_settings (guild_id, log_channel, allowed_role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE log_channel = ?, allowed_role = ?',
-        [guildId, guildData.settings.logChannel, guildData.settings.allowedRole, guildData.settings.logChannel, guildData.settings.allowedRole],
-        (err) => {
-            if (err) {
-                console.error('Erreur lors de la sauvegarde des paramètres:', err);
-            }
-        }
-    );
-
-    // Sauvegarder les heures des utilisateurs
-    Object.keys(guildData.hours).forEach(userId => {
-        guildData.hours[userId].forEach(entry => {
-            console.log("Sauvegarde de l'heure pour l'utilisateur:", userId, entry);  // Log des données à sauvegarder
-            connection.query(
-                'INSERT INTO user_hours (guild_id, user_id, clock_in, clock_out) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE clock_out = ?',
-                [guildId, userId, entry.clockIn, entry.clockOut, entry.clockOut],
-                (err) => {
-                    if (err) {
-                        console.error(`Erreur lors de la sauvegarde des heures pour l'utilisateur ${userId}:`, err);
-                    }
-                }
-            );
-        });
-    });
-}
+// Charger les données du serveur lors de l'ajout du bot
+const { loadData, saveData } = require('./modules');
 
 client.on('guildCreate', async (guild) => {
     try {
@@ -123,22 +45,22 @@ client.on('guildCreate', async (guild) => {
 
 client.on('messageCreate', async (message) => {
     if (!message.guild || message.author.bot) return;
-
+    // Récupérer l'ID du serveur
     const guildId = message.guild.id;
     let guildData = await loadData(guildId);
-
+    // Commande .clock
     if (message.content === '.clock') {
         message.reply('Commandes: .clockin, .clockout, .clockview, .clockshow, .clockset log <channelId>, .clockset role <roleId>, .clockset reset');
     }
-
+    // Commande .clockin
     if (message.content === '.clockin') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
         }
-
+        // Vérifier si l'utilisateur est déjà pointé
         const userId = message.author.id;
         if (!guildData.hours[userId]) guildData.hours[userId] = [];
-
+        
         if (guildData.hours[userId].some(entry => entry.clockOut === null)) {
             return message.reply("Vous êtes déjà pointé.");
         }
@@ -154,18 +76,18 @@ client.on('messageCreate', async (message) => {
         console.log("Données après sauvegarde:", guildData.hours);  // Log après sauvegarde
 
         message.reply(`Vous êtes maintenant pointé à ${now}.`);
-
+        // Envoi d'un message dans le canal de log si configuré
         if (guildData.settings.logChannel) {
             const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
             if (logChannel) logChannel.send(`<@${userId}> a pointé à ${now}.`);
         }
     }
-
+    // Commande .clockout
     if (message.content === '.clockout') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
         }
-    
+        // Récupérer l'ID de l'utilisateur et l'entrée en cours
         const userId = message.author.id;
         const entry = guildData.hours[userId]?.find(entry => entry.clockOut === null);
     
@@ -194,7 +116,7 @@ client.on('messageCreate', async (message) => {
     
     
     
-
+    // Fonction pour formater la date en format lisible
     const formatDate = (dateString) => {
         if (!dateString) return 'En cours';
         const date = new Date(dateString);
@@ -240,7 +162,7 @@ client.on('messageCreate', async (message) => {
                 Object.keys(userHours).forEach(userId => {
                     const user = message.guild.members.cache.get(userId);
                     response += `\n**Historique des heures de <@${userId}>** :\n`;
-
+                    // Si l'utilisateur n'est pas trouvé, affiche l'ID
                     let totalWorkedMinutes = 0;
                     userHours[userId].forEach(entry => {
                         const clockIn = entry.clockIn;
@@ -279,15 +201,15 @@ client.on('messageCreate', async (message) => {
                     console.error('Erreur lors de la récupération des heures:', err);
                     return message.reply('❌ Une erreur est survenue.');
                 }
-    
+                // Vérifier si l'utilisateur a des heures enregistrées
                 if (results.length === 0) {
                     return message.reply(`📭 Aucun historique pour <@${userId}>.`);
                 }
-    
+                // Création de la réponse avec l'historique des heures
                 let response = `📊 **Historique des heures de <@${userId}>** :\n`;
-    
+                // Variable pour accumuler le total des minutes travaillées
                 let totalWorkedMinutes = 0; // Variable pour accumuler le total des minutes travaillées
-    
+                // Parcours des résultats de la requête SQL
                 results.forEach(row => {
                     const clockIn = moment(row.clock_in);  // Moment de l'entrée
                     const clockOut = row.clock_out ? moment(row.clock_out) : null;  // Moment de la sortie (peut être null)
@@ -320,13 +242,13 @@ client.on('messageCreate', async (message) => {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
-
+        // Récupérer l'ID du canal spécifié
         const args = message.content.split(' ');
         const channelId = args[2];
         const channel = message.guild.channels.cache.get(channelId);
-
+        // Vérifier si le canal spécifié est valide
         if (!channel) return message.reply("Le canal spécifié est invalide.");
-
+        // Mettre à jour les paramètres du serveur
         guildData.settings.logChannel = channelId;
         saveData(guildId, guildData);
         message.reply(`Le canal de logs a été défini sur ${channel.name}.`);
@@ -337,13 +259,13 @@ client.on('messageCreate', async (message) => {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
-
+        // Récupérer l'ID du rôle spécifié
         const args = message.content.split(' ');
         const roleId = args[2];
         const role = message.guild.roles.cache.get(roleId);
-
+        // Vérifier si le rôle spécifié est valide
         if (!role) return message.reply("Le rôle spécifié est invalide.");
-
+        // Mettre à jour les paramètres du serveur
         guildData.settings.allowedRole = roleId;
         saveData(guildId, guildData);
 
@@ -390,5 +312,8 @@ client.on('messageCreate', async (message) => {
             });
     }    
 });
-
+// Log de connexion du bot
+client.on('ready', () => {
+    console.log(`Connecté en tant que ${client.user.tag}!`);
+});
 client.login(process.env.BOT_TOKEN);
