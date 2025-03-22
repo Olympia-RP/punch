@@ -15,13 +15,13 @@ const client = new Client({
 
 process.on('SIGINT', () => {
     console.log('Détection de fermeture du processus (SIGINT), déconnexion du bot...');
-    if (client) client.destroy();
+    client.destroy();
     process.exit(0);
 });
 
 process.on('SIGTERM', () => {
     console.log('Détection de fermeture du processus (SIGTERM), déconnexion du bot...');
-    if (client) client.destroy();
+    client.destroy();
     process.exit(0);
 });
 
@@ -330,6 +330,7 @@ client.on('messageCreate', async (message) => {
             });
     }    
 });
+
 // Log de connexion du bot
 client.on('ready', () => {
     console.log(`Connecté en tant que ${client.user.tag}!`);
@@ -340,4 +341,5 @@ client.on('disconnect', () => {
 });
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+
 client.login(process.env.BOT_TOKEN);
