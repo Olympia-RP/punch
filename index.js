@@ -13,6 +13,7 @@ const client = new Client({
     ]
 });
 
+require('./shutdown'); // Importer le module de gestion de l'extinction du bot
 
 // Stocke l'ID du propriétaire du bot dans une variable d'environnement
 const botOwnerId = process.env.BOT_OWNER_ID; 
@@ -316,4 +317,9 @@ client.on('messageCreate', async (message) => {
 client.on('ready', () => {
     console.log(`Connecté en tant que ${client.user.tag}!`);
 });
+// Log de déconnexion du bot
+client.on('disconnect', () => {
+    console.log('Déconnecté du serveur Discord.');
+});
+
 client.login(process.env.BOT_TOKEN);
