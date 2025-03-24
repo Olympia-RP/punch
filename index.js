@@ -16,9 +16,9 @@ const client = new Client({
 
 
 // Détecter la fermeture du processus (Pterodactyl, Ctrl+C, kill)
-const shutdown = () => {
-    console.log('🛑 Arrêt détecté, déconnexion immédiate du bot...');
-    client.destroy();
+const shutdown = async () => {
+    console.log('🛑  Arrêt détecté, déconnexion immédiate du bot...');
+    await client.destroy();
     process.exit(0);
 };
 
@@ -325,7 +325,7 @@ client.on('messageCreate', async (message) => {
 client.on('ready', () => {
     console.log(`Connecté en tant que ${client.user.tag}!`);
 });
-process.on('SIGINT', async () => {
+/*process.on('SIGINT', async () => {
     console.log('Arrêt du bot...');
     await client.destroy();  // Déconnexion propre du bot
     process.exit(0);  // Quitter le processus
@@ -335,8 +335,8 @@ process.on('SIGTERM',async () => {
     console.log('Détection de fermeture du processus (SIGTERM), déconnexion du bot...');
     await client.destroy();
     process.exit(0);
-});
-// process.on('SIGINT', shutdown);
-// process.on('SIGTERM', shutdown);
+});*/
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 client.login(process.env.BOT_TOKEN);
