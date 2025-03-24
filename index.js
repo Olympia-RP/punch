@@ -13,17 +13,7 @@ const client = new Client({
     ]
 });
 
-process.on('SIGINT', async () => {
-    console.log('Arrêt du bot...');
-    await client.destroy();  // Déconnexion propre du bot
-    process.exit(0);  // Quitter le processus
-});
 
-process.on('SIGTERM', () => {
-    console.log('Détection de fermeture du processus (SIGTERM), déconnexion du bot...');
-    client.destroy();
-    process.exit(0);
-});
 
 // Détecter la fermeture du processus (Pterodactyl, Ctrl+C, kill)
 const shutdown = () => {
@@ -335,11 +325,18 @@ client.on('messageCreate', async (message) => {
 client.on('ready', () => {
     console.log(`Connecté en tant que ${client.user.tag}!`);
 });
-// Log de déconnexion du bot
-client.on('disconnect', () => {
-    console.log('Déconnecté du serveur Discord.');
+process.on('SIGINT', async () => {
+    console.log('Arrêt du bot...');
+    await client.destroy();  // Déconnexion propre du bot
+    process.exit(0);  // Quitter le processus
 });
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+
+process.on('SIGTERM',async () => {
+    console.log('Détection de fermeture du processus (SIGTERM), déconnexion du bot...');
+    await client.destroy();
+    process.exit(0);
+});
+// process.on('SIGINT', shutdown);
+// process.on('SIGTERM', shutdown);
 
 client.login(process.env.BOT_TOKEN);
