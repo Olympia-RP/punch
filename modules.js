@@ -1,7 +1,27 @@
+const mysql = require('mysql2');
+const moment = require('moment');
+require('dotenv').config();
+
+// Connexion à la base de données
+const connection = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+});
+
+// Vérifier si la connexion à la base de données a réussi
+connection.connect((err) => {
+    if (err) {
+        console.error('🛑  Erreur de connexion à la base de données:', err.stack);
+        return;
+    }
+    console.log('✅  Connecté à la base de données MySQL.');
+});
+
 // Fonction pour charger les données d'un serveur spécifique depuis MySQL
 function loadData(guildId) {
     return new Promise((resolve, reject) => {
-        // Charger les paramètres du serveur
         connection.query(
             'SELECT * FROM guild_settings WHERE guild_id = ?',
             [guildId],
@@ -21,7 +41,6 @@ function loadData(guildId) {
                     hours: {}
                 };
 
-                // Charger les heures des utilisateurs
                 connection.query(
                     'SELECT * FROM user_hours WHERE guild_id = ?',
                     [guildId],
@@ -50,7 +69,6 @@ function loadData(guildId) {
 
 // Fonction pour sauvegarder les données dans la base de données MySQL
 function saveData(guildId, guildData) {
-    // Sauvegarder les paramètres du serveur
     connection.query(
         'INSERT INTO guild_settings (guild_id, log_channel, allowed_role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE log_channel = ?, allowed_role = ?',
         [guildId, guildData.settings.logChannel, guildData.settings.allowedRole, guildData.settings.logChannel, guildData.settings.allowedRole],
@@ -61,10 +79,9 @@ function saveData(guildId, guildData) {
         }
     );
 
-    // Sauvegarder les heures des utilisateurs
+
     Object.keys(guildData.hours).forEach(userId => {
         guildData.hours[userId].forEach(entry => {
-            console.log("Sauvegarde de l'heure pour l'utilisateur:", userId, entry);  // Log des données à sauvegarder
             connection.query(
                 'INSERT INTO user_hours (guild_id, user_id, clock_in, clock_out) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE clock_out = ?',
                 [guildId, userId, entry.clockIn, entry.clockOut, entry.clockOut],
