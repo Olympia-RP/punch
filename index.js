@@ -18,8 +18,14 @@ const client = new Client({
 // Détecter la fermeture du processus (Pterodactyl, Ctrl+C, kill)
 const shutdown = async (signal) => {
     console.log(`🛑  Signal reçu: ${signal}. Déconnexion du bot en cours...`);
-    await client.destroy(); 
-    console.log('✅  Bot déconnecté avec succès.');
+
+    if (client && client.destroy) {
+        console.log(`ℹ️  Client status: ${client.status}`);
+        await client.destroy(); 
+        console.log('✅  Bot déconnecté avec succès.');
+    } else {
+        console.log(`⚠️ Client déjà inactif ou non défini.`);
+    }
 
     process.exit(0);
 };
@@ -331,6 +337,6 @@ client.on('ready', () => {
 // Gestion des erreurs
 client.on('error', console.error);
 process.on('SIGINT', () => shutdown('SIGINT'));
-// process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 client.login(process.env.BOT_TOKEN);
