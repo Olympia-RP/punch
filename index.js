@@ -21,7 +21,7 @@ const shutdown = async (signal) => {
         console.log(`ℹ️  Processus de déconnexion en cours...`);
         console.log(`ℹ️  Signal reçu: ${signal}. Déconnexion du bot en cours...`);
         await client.destroy(); 
-    } elseif (client.destroy) {
+    } else if (client.destroy) {
         console.log('✅  Bot déconnecté avec succès.');    
     } else {
         console.log(`⚠️ Client déjà inactif ou non défini.`);
