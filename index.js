@@ -17,9 +17,9 @@ const client = new Client({
 
 // Détecter la fermeture du processus (Pterodactyl, Ctrl+C, kill)
 const shutdown = async (signal) => {
-    console.log(`🛑 Signal reçu: ${signal}. Déconnexion du bot en cours...`);
+    console.log(`🛑  Signal reçu: ${signal}. Déconnexion du bot en cours...`);
     await client.destroy(); 
-    console.log('✅ Bot déconnecté avec succès.');
+    console.log('✅  Bot déconnecté avec succès.');
 
     process.exit(0);
 };
@@ -36,10 +36,10 @@ const connection = mysql.createConnection({
 // Vérifier si la connexion à la base de données a réussi
 connection.connect((err) => {
     if (err) {
-        console.error('Erreur de connexion à la base de données:', err.stack);
+        console.error('🛑  Erreur de connexion à la base de données:', err.stack);
         return;
     }
-    console.log('Connecté à la base de données MySQL.');
+    console.log('✅  Connecté à la base de données MySQL.');
 });
 // Charger les données du serveur lors de l'ajout du bot
 const { loadData, saveData } = require('./modules');
@@ -325,19 +325,11 @@ client.on('messageCreate', async (message) => {
 
 // Log de connexion du bot
 client.on('ready', () => {
-    console.log(`Connecté en tant que ${client.user.tag}!`);
-});
-/*process.on('SIGINT', async () => {
-    console.log('Arrêt du bot...');
-    await client.destroy();  // Déconnexion propre du bot
-    process.exit(0);  // Quitter le processus
+    console.log(`✅  Bot connecter avec succès en tant que ${client.user.tag}!`);
 });
 
-process.on('SIGTERM',async () => {
-    console.log('Détection de fermeture du processus (SIGTERM), déconnexion du bot...');
-    await client.destroy();
-    process.exit(0);
-});*/
+// Gestion des erreurs
+client.on('error', console.error);
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
