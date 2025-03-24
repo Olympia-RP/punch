@@ -337,6 +337,6 @@ client.on('ready', () => {
 // Gestion des erreurs
 client.on('error', console.error);
 process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
+// process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 client.login(process.env.BOT_TOKEN);
