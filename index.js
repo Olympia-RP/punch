@@ -16,9 +16,21 @@ const client = new Client({
 
 
 // Détecter la fermeture du processus (Pterodactyl, Ctrl+C, kill)
-const shutdown = async () => {
-    console.log('🛑  Arrêt détecté, déconnexion immédiate du bot...');
-    await client.destroy();
+const shutdown = async (signal) => {
+    // console.log('🛑  Arrêt détecté, déconnexion immédiate du bot...');
+
+    const date = new Date().toLocaleString(); // Obtenir l'heure exacte de l'arrêt
+    console.log(`🛑 [${date}] Signal reçu: ${signal}. Déconnexion du bot en cours...`);
+
+    if (client) {
+        console.log(`ℹ️ [${date}] Client status: ${client.status}`); // Afficher l'état avant destruction
+
+        await client.destroy();
+        console.log(`✅ [${date}] Déconnexion réussie.`);
+    } else {
+        console.log(`⚠️ [${date}] Client déjà inactif ou non défini.`);
+    }
+
     process.exit(0);
 };
 
@@ -336,7 +348,7 @@ process.on('SIGTERM',async () => {
     await client.destroy();
     process.exit(0);
 });*/
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown('SIGINT'));
+process.on('SIGTERM', shutdown('SIGTERM'));
 
 client.login(process.env.BOT_TOKEN);
