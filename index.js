@@ -17,10 +17,10 @@ const client = new Client({
 
 // Détecter la fermeture du processus (Pterodactyl, Ctrl+C, kill)
 const shutdown = async (signal) => {
-    console.log(`🛑  Signal reçu: ${signal}. Déconnexion du bot en cours...`);
+    console.log(`ℹ️  Processus de déconnexion en cours...`);
 
     if (client && client.destroy) {
-        console.log(`ℹ️  Client status: ${client.status}`);
+        console.log(`ℹ️  Signal reçu: ${signal}. Déconnexion du bot en cours...`);
         await client.destroy(); 
         console.log('✅  Bot déconnecté avec succès.');
     } else {
