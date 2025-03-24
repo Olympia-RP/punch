@@ -338,7 +338,7 @@ process.on('SIGTERM',async () => {
     await client.destroy();
     process.exit(0);
 });*/
-process.on('SIGINT', shutdown('SIGINT'));
-process.on('SIGTERM', shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 client.login(process.env.BOT_TOKEN);
