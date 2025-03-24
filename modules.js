@@ -95,4 +95,4 @@ function saveData(guildId, guildData) {
     });
 }
 
-module.exports = { loadData, saveData };
+module.exports = { loadData, saveData, connection };
