@@ -13,10 +13,10 @@ const client = new Client({
     ]
 });
 
-process.on('SIGINT', () => {
-    console.log('Détection de fermeture du processus (SIGINT), déconnexion du bot...');
-    client.destroy();
-    process.exit(0);
+process.on('SIGINT', async () => {
+    console.log('Arrêt du bot...');
+    await client.destroy();  // Déconnexion propre du bot
+    process.exit(0);  // Quitter le processus
 });
 
 process.on('SIGTERM', () => {
