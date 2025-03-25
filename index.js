@@ -51,7 +51,7 @@ client.on('messageCreate', async (message) => {
     let guildData = await loadData(guildId);
     // Commande .clock
     if (message.content === '.clock') {
-        message.reply('Commandes: .clockin, .clockout, .clockview, .clockshow, .clockset log <channelId>, .clockset role <roleId>, .clockset reset');
+        message.reply('Commandes: .clockin : Enregistrez votre entrée dans le système., .clockout  : Enregistrez votre sortie du système., .clockview  : Affichez votre historique des heures., .clockshow : Affichez l\'historique des heures pour tous les utilisateurs., .clockset log <channelId> : Owner du bot uniquement., .clockset role <roleId> : Owner du bot uniquement., .clockset reset : reset tout les membre avec leur heure tout en gardant le canal log & role intact.');
     }
     // Commande .clockin
     if (message.content === '.clockin') {
