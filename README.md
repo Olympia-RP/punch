@@ -17,8 +17,12 @@ Punch est un bot Discord permettant de gérer les pointages des utilisateurs. Il
 
 3. Copier le fichier `.env.exemple` en `.env` à la racine du projet et modifier la variables d'environnement :
     ```env
-    TOKEN=your_discord_bot_token        # Discord bot token
-    BOT_OWNER_ID=                       # Discord ID of the bot owner
+        BOT_TOKEN=                          # Le jeton d'authentification du bot Discord
+        BOT_OWNER_ID=                       # L'identifiant Discord du propriétaire du bot
+        DB_HOST=                            # L'adresse de l'hôte de la base de données (ex: localhost)
+        DB_USER=                            # Le nom d'utilisateur pour se connecter à la base de données
+        DB_PASSWORD=                        # Le mot de passe pour se connecter à la base de données
+        DB_NAME=                            # Le nom de la base de données à utiliser
     ```
 
 ## Utilisation
@@ -42,7 +46,9 @@ Punch est un bot Discord permettant de gérer les pointages des utilisateurs. Il
 
 ## Configuration
 
-- Le fichier `data/IDGUILD.json` est utilisé pour stocker les données des utilisateurs et les paramètres du bot. Il est créé automatiquement si il n'existe pas.
+- Les données des utilisateurs et les paramètres du bot sont désormais gérés via une base de données MySQL. Assurez-vous que les informations de connexion à la base de données sont correctement configurées dans le fichier `.env`. Le fichier `data/IDGUILD.json` n'est plus utilisé.
+
+`mysql -u <votre_utilisateur> -p <votre_base_de_données> < setup.sql`
 
 ## Auteurs
 
