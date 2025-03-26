@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const mysql = require('mysql2');
 const moment = require('moment');
@@ -146,7 +146,7 @@ client.on('messageCreate', async (message) => {
                     return message.reply('📭 Aucun membre n’a enregistré d’heures.');
                 }
     
-                let embed = new MessageEmbed()
+                let embed = new EmbedBuilder()
                     .setColor('#0099ff')
                     .setTitle(`Historique des heures des membres sur ${message.guild.name}`)
                     .setDescription('Voici l\'historique des heures de travail des membres :');
@@ -188,7 +188,7 @@ client.on('messageCreate', async (message) => {
                     userText += `⏳ **Total travaillé** : ${hours}h ${minutes}m\n`;
     
                     // Ajouter les heures de l'utilisateur à l'embed
-                    embed.addField(user ? user.user.tag : `Utilisateur ${userId}`, userText, false);
+                    embed.addFields({ name: user ? user.user.tag : `Utilisateur ${userId}`, value: userText });
                 });
     
                 message.reply({ embeds: [embed] });
@@ -212,7 +212,7 @@ client.on('messageCreate', async (message) => {
                     return message.reply(`📭 Aucun historique pour <@${userId}>.`);
                 }
     
-                let embed = new MessageEmbed()
+                let embed = new EmbedBuilder()
                     .setColor('#0099ff')
                     .setTitle(`Historique des heures de <@${userId}>`)
                     .setDescription('Voici l\'historique des heures de l\'utilisateur.');
@@ -223,10 +223,8 @@ client.on('messageCreate', async (message) => {
                     const clockIn = moment(row.clock_in);  // Moment de l'entrée
                     const clockOut = row.clock_out ? moment(row.clock_out) : null;  // Moment de la sortie (peut être null)
     
-                    embed.addField(
-                        `🕐 Entrée : ${clockIn.format('YYYY-MM-DD HH:mm')}`,
-                        `Sortie : ${clockOut ? clockOut.format('YYYY-MM-DD HH:mm') : 'En cours'}`,
-                        false
+                    embed.addFields(
+                        { name: `🕐 Entrée : ${clockIn.format('YYYY-MM-DD HH:mm')}`, value: `Sortie : ${clockOut ? clockOut.format('YYYY-MM-DD HH:mm') : 'En cours'}` }
                     );
     
                     // Calcul du temps travaillé si la sortie est définie
@@ -240,16 +238,15 @@ client.on('messageCreate', async (message) => {
                 const hours = Math.floor(totalWorkedMinutes / 60);
                 const minutes = totalWorkedMinutes % 60;
     
-                embed.addField(
-                    '⏳ **Total travaillé**',
-                    `${hours}h ${minutes}m`,
-                    false
+                embed.addFields(
+                    { name: '⏳ **Total travaillé**', value: `${hours}h ${minutes}m` }
                 );
     
                 message.reply({ embeds: [embed] });
             }
         );
     }
+    
     
     
 
