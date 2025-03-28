@@ -2,13 +2,18 @@ const mysql = require('mysql2');
 const moment = require('moment');
 require('dotenv').config();
 
+// Fonction pour créer une connexion
+function createConnection() {
+    return mysql.createConnection({
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME
+    });
+}
+
 // Connexion à la base de données
-const connection = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-});
+let connection = createConnection();
 
 // Vérifier si la connexion à la base de données a réussi
 connection.connect((err) => {
@@ -18,6 +23,25 @@ connection.connect((err) => {
     }
     console.log('✅  Connecté à la base de données MySQL.');
 });
+
+// Fonction pour gérer la reconnexion en cas de perte de connexion
+function handleDisconnect() {
+    connection.on('error', (err) => {
+        console.error('🛑  Erreur de connexion MySQL:', err);
+        if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+            // Reconnexion automatique
+            console.log('🔄  Connexion perdue, tentative de reconnexion...');
+            connection = createConnection();  // Créer une nouvelle connexion
+            handleDisconnect();  // Réécouter les erreurs
+        } else {
+            // Autres erreurs
+            console.error('🛑  Autre erreur MySQL:', err);
+        }
+    });
+}
+
+// Initialiser la gestion des erreurs pour la reconnexion
+handleDisconnect();
 
 // Fonction pour charger les données d'un serveur spécifique depuis MySQL
 function loadData(guildId) {
@@ -78,7 +102,6 @@ function saveData(guildId, guildData) {
             }
         }
     );
-
 
     Object.keys(guildData.hours).forEach(userId => {
         guildData.hours[userId].forEach(entry => {
