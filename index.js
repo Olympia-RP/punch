@@ -292,6 +292,14 @@ const connection = mysql.createConnection({
     database: process.env.DB_NAME
 });
 
+
+// Log de connexion du bot
+client.on('ready', () => {
+    console.log(`✅  Bot connecter avec succès en tant que ${client.user.tag}!`);
+});
+
+// Log de connexion à la base de données
+console.log('🔗  Connexion à la base de données MySQL...');
 connection.connect(err => {
     if (err) {
         console.error('🛑  Erreur de connexion à la base de données:', err);
@@ -300,6 +308,11 @@ connection.connect(err => {
     console.log('✅  Connecté à la base de données MySQL.');
 }
 );
+
+// Gestion des erreurs
+client.on('error', console.error);
+process.on('SIGINT', () => shutdown('SIGINT'));
+// process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 
 
