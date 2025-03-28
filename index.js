@@ -321,9 +321,16 @@ client.on('messageCreate', async (message) => {
         const koala_punch = `https://discord.com/oauth2/authorize?client_id=1349304853213483049&permissions=8&integration_type=0&scope=bot`;
 
         // Envoyer le lien d'invitation au propriétaire
-        message.reply(`RedBot (Koala) : ${redbot}
+        try {
+            await message.author.send(`Voici vos liens d'invitation :
+RedBot (Koala) : ${redbot}
 Koala Form : ${koala_form} 
 Koala Punch : ${koala_punch}`);
+            message.reply("Je vous ai envoyé les liens d'invitation en message privé.");
+        } catch (error) {
+            console.error('Erreur lors de l\'envoi du message privé:', error);
+            message.reply("Je n'ai pas pu vous envoyer les liens en message privé. Veuillez vérifier vos paramètres de confidentialité.");
+        }
     }
 });
 
