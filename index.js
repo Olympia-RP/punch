@@ -292,5 +292,16 @@ const connection = mysql.createConnection({
     database: process.env.DB_NAME
 });
 
+connection.connect(err => {
+    if (err) {
+        console.error('🛑  Erreur de connexion à la base de données:', err);
+        process.exit(1);
+    }
+    console.log('✅  Connecté à la base de données MySQL.');
+}
+);
+
+
+
 // Démarrage du bot
 client.login(process.env.BOT_TOKEN);
