@@ -289,9 +289,9 @@ client.on('messageCreate', async (message) => {
             return message.reply("Vous devez être administrateur pour utiliser cette commande.");
         }
 
-        // Réinitialiser les heures dans la base de données sans toucher à la config
+        // Réinitialiser toutes les heures dans la table user_hours sans toucher à la configuration
         connection.query(
-            'UPDATE user_hours SET clock_in = NULL, clock_out = NULL WHERE guild_id = ?',
+            'DELETE FROM user_hours WHERE guild_id = ?',
             [guildId],
             (err, results) => {
                 if (err) {
@@ -299,7 +299,7 @@ client.on('messageCreate', async (message) => {
                     return message.reply('❌ Une erreur est survenue.');
                 }
 
-                message.reply('✅ Toutes les heures ont été réinitialisées, mais la configuration reste intacte.');
+                message.reply('✅ Toutes les heures ont été réinitialisées pour ce serveur.');
             }
         );
     }
