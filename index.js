@@ -5,7 +5,7 @@ const moment = require('moment');
 require('dotenv').config();
 
 // Importer les fonctions depuis modules.js
-const { loadData, saveData, connection } = require('./modules');
+const { loadData, saveData, query } = require('./modules');
 
 const client = new Client({
     intents: [
