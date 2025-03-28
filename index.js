@@ -16,7 +16,6 @@ const client = new Client({
     ]
 });
 
-
 // Détecter la fermeture du processus (Pterodactyl, Ctrl+C, kill)
 const shutdown = async (signal) => {
     // Vérifier si le client est défini et actif
@@ -115,8 +114,6 @@ client.on('messageCreate', async (message) => {
         }
     }
     
-    
-    
     // Fonction pour formater la date en format lisible
     const formatDate = (dateString) => {
         if (!dateString) return 'En cours';
@@ -195,7 +192,6 @@ client.on('messageCreate', async (message) => {
             }
         );
     }
-    
 
     if (message.content.startsWith('.clockview')) {
         const userId = message.mentions.users.first()?.id || message.author.id;
@@ -246,10 +242,6 @@ client.on('messageCreate', async (message) => {
             }
         );
     }
-    
-    
-    
-    
 
     // Commande .clockset log
     if (message.content.startsWith('.clockset log')) {
@@ -260,12 +252,15 @@ client.on('messageCreate', async (message) => {
         const args = message.content.split(' ');
         const channelId = args[2];
         const channel = message.guild.channels.cache.get(channelId);
-        // Vérifier si le canal spécifié est valide
-        if (!channel) return message.reply("Le canal spécifié est invalide.");
-        // Mettre à jour les paramètres du serveur
+    
+        if (!channel || channel.type !== 'GUILD_TEXT') {
+            return message.reply("Veuillez spécifier un canal valide.");
+        }
+
         guildData.settings.logChannel = channelId;
         saveData(guildId, guildData);
-        message.reply(`Le canal de logs a été défini sur ${channel.name}.`);
+
+        message.reply(`Le canal de log a été configuré sur ${channel.name}.`);
     }
 
     // Commande .clockset role
@@ -277,64 +272,25 @@ client.on('messageCreate', async (message) => {
         const args = message.content.split(' ');
         const roleId = args[2];
         const role = message.guild.roles.cache.get(roleId);
-        // Vérifier si le rôle spécifié est valide
-        if (!role) return message.reply("Le rôle spécifié est invalide.");
-        // Mettre à jour les paramètres du serveur
+    
+        if (!role) {
+            return message.reply("Veuillez spécifier un rôle valide.");
+        }
+
         guildData.settings.allowedRole = roleId;
         saveData(guildId, guildData);
 
-        message.reply(`Le rôle ${role.name} a été défini comme rôle autorisé pour utiliser les commandes de pointage.`);
+        message.reply(`Le rôle autorisé a été configuré sur ${role.name}.`);
     }
-
-    if (message.content === '.clockset reset') {
-        // Vérifier si l'utilisateur a les permissions nécessaires
-        const userId = message.mentions.users.first()?.id || message.author.id;
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
-            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
-        }
-    
-        // Demander confirmation à l'admin
-        message.reply("Êtes-vous sûr de vouloir réinitialiser toutes les heures ? Répondez **oui** dans les 30 secondes pour confirmer.")
-            .then(() => {
-                // Création d'un filtre pour ne prendre en compte que la réponse de l'admin
-                const filter = response => 
-                    response.author.id === message.author.id && response.content.toLowerCase() === "oui";
-    
-                // Attendre une réponse pendant 30 secondes
-                message.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] })
-                    .then(() => {
-                        // Exécuter la requête SQL pour supprimer les heures des membres
-                        const sql = `DELETE FROM user_hours WHERE guild_id = ?`;
-                        connection.query(sql, [guildId], (err, result) => {
-                            if (err) {
-                                console.error("Erreur lors de la réinitialisation des heures:", err);
-                                return message.reply("Une erreur est survenue lors de la réinitialisation des heures.");
-                            }
-    
-                            message.reply("Les heures des membres ont été réinitialisées.");
-    
-                            // Envoyer un message dans le canal de log si configuré
-                            if (guildData.settings.logChannel) {
-                                const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
-                                if (logChannel) logChannel.send(`Les heures des membres ont été réinitialisées par <@${userId}>.`);
-                            }
-                        });
-                    })
-                    .catch(() => {
-                        message.reply("Réinitialisation annulée. Vous n'avez pas confirmé dans le temps imparti.");
-                    });
-            });
-    }    
 });
 
-// Log de connexion du bot
-client.on('ready', () => {
-    console.log(`✅  Bot connecter avec succès en tant que ${client.user.tag}!`);
+// Connexion à la base de données MySQL
+const connection = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
 });
 
-// Gestion des erreurs
-client.on('error', console.error);
-process.on('SIGINT', () => shutdown('SIGINT'));
-// process.on('SIGTERM', () => shutdown('SIGTERM'));
-
+// Démarrage du bot
 client.login(process.env.BOT_TOKEN);
