@@ -305,6 +305,27 @@ client.on('messageCreate', async (message) => {
     }
 });
 
+// Commande .invite
+client.on('messageCreate', async (message) => {
+    if (!message.guild || message.author.bot) return;
+
+    if (message.content === '.invite') {
+        // Vérifier si l'utilisateur est le propriétaire du bot
+        if (message.author.id !== botOwnerId) {
+            return message.reply("Vous devez être le propriétaire du bot pour utiliser cette commande.");
+        }
+
+        // Générer un lien d'invitation pour le bot
+        const redbot = `https://discord.com/oauth2/authorize?client_id=1332100328551612506&permissions=8&integration_type=0&scope=bot`;
+        const koala_form = "https://discord.com/oauth2/authorize?client_id=1346401285124919296&permissions=8&integration_type=0&scope=bot";
+        const koala_punch = "https://discord.com/oauth2/authorize?client_id=1349304853213483049&permissions=8&integration_type=0&scope=bot";
+
+        // Envoyer le lien d'invitation au propriétaire
+        message.reply(`RedBot (Koala) : ${redbot}\n
+            Koala Form : ${koala_form}\n
+            Koala Punch : ${koala_punch}`;
+    }
+});
 
 
 // Connexion à la base de données MySQL
