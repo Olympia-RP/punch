@@ -317,8 +317,8 @@ client.on('messageCreate', async (message) => {
 
         // Générer un lien d'invitation pour le bot
         const redbot = `https://discord.com/oauth2/authorize?client_id=1332100328551612506&permissions=8&integration_type=0&scope=bot`;
-        const koala_form = "https://discord.com/oauth2/authorize?client_id=1346401285124919296&permissions=8&integration_type=0&scope=bot";
-        const koala_punch = "https://discord.com/oauth2/authorize?client_id=1349304853213483049&permissions=8&integration_type=0&scope=bot";
+        const koala_form = `https://discord.com/oauth2/authorize?client_id=1346401285124919296&permissions=8&integration_type=0&scope=bot`;
+        const koala_punch = `https://discord.com/oauth2/authorize?client_id=1349304853213483049&permissions=8&integration_type=0&scope=bot`;
 
         // Envoyer le lien d'invitation au propriétaire
         message.reply(`RedBot (Koala) : ${redbot}\n
