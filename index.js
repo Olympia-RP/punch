@@ -284,6 +284,28 @@ client.on('messageCreate', async (message) => {
     }
 });
 
+// Commande .clockset reset
+if (message.content.startsWith('.clockset reset')) {
+    if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator) && message.author.id !== botOwnerId) {
+        return message.reply("Vous devez être administrateur pour utiliser cette commande.");
+    }
+
+    // Réinitialiser les heures dans la base de données sans toucher à la config
+    connection.query(
+        'UPDATE user_hours SET clock_in = NULL, clock_out = NULL WHERE guild_id = ?',
+        [guildId],
+        (err, results) => {
+            if (err) {
+                console.error('Erreur lors de la réinitialisation des heures:', err);
+                return message.reply('❌ Une erreur est survenue.');
+            }
+
+            message.reply('✅ Toutes les heures ont été réinitialisées, mais la configuration reste intacte.');
+        }
+    );
+}
+
+
 // Connexion à la base de données MySQL
 const connection = mysql.createConnection({
     host: process.env.DB_HOST,
