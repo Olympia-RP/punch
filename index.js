@@ -241,7 +241,7 @@ client.on('messageCreate', async (message) => {
     
                 let totalWorkedMinutes = 0;
                 let currentEmbed = new EmbedBuilder()
-                    .setColor('#0099ff')
+                    .setColor(parseInt('0x0099ff'))
                     .setTitle(`Historique des heures de <@${userId}>`)  // Mentionner l'utilisateur dans le titre
                     .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
                 
