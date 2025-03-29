@@ -191,64 +191,47 @@ client.on('messageCreate', async (message) => {
     
 
     if (message.content.startsWith('.clockview')) {
-        const user = message.mentions.users.first() || message.author;
+        const userId = message.mentions.users.first()?.id || message.author.id;
     
         try {
             const [results] = await pool.query(
-                'SELECT clock_in, clock_out FROM user_hours WHERE guild_id = ? AND user_id = ?',
-                [guildId, user.id]
+                'SELECT clock_in, clock_out FROM user_hours WHERE user_id = ? AND guild_id = ?',
+                [userId, guildId]
             );
     
             if (results.length === 0) {
-                return message.reply(`📭 Aucun enregistrement d'heures pour <@${user.id}>.`);
+                return message.reply(`📭 Aucun historique pour <@${userId}>.`);
             }
-    
-            let totalHours = 0;
-            results.forEach(row => {
-                if (row.clock_out) {
-                    totalHours += moment(row.clock_out).diff(moment(row.clock_in), 'hours', true); // Calcul en heures
-                }
-            });
-
-            results.forEach(row => {
-                const clockIn = moment(row.clock_in).format('ddd MMM DD YYYY HH:mm');
-                const clockOut = row.clock_out ? moment(row.clock_out).format('ddd MMM DD YYYY HH:mm') : 'En cours';
-                
-                const fieldValue = `Entrée : ${clockIn}, Sortie : ${clockOut}`;
-            
-                // Vérifier si la longueur du texte dépasse la limite de Discord
-                if (fieldValue.length <= 1024) {
-                    embed.addFields({
-                        name: `Heures de <@${user.id}>`,
-                        value: fieldValue
-                    });
-                } else {
-                    // Si la longueur dépasse, tronquer le texte
-                    embed.addFields({
-                        name: `Heures de <@${user.id}>`,
-                        value: fieldValue.substring(0, 1021) + '...'  // Troncature à 1024 caractères max
-                    });
-                }
-            });
     
             let embed = new EmbedBuilder()
                 .setColor('#0099ff')
-                .setTitle(`Historique des heures de <@${user.id}> sur ${message.guild.name}`)
-                .setDescription('Voici l\'historique des heures de travail :');
+                .setTitle(`Historique des heures de <@${userId}>`)
+                .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
+    
+            let totalWorkedMinutes = 0;
     
             results.forEach(row => {
-                const clockIn = moment(row.clock_in).format('ddd MMM DD YYYY HH:mm');
-                const clockOut = row.clock_out ? moment(row.clock_out).format('ddd MMM DD YYYY HH:mm') : 'En cours';
-                embed.addFields({
-                    name: `Entrée : ${clockIn}`,
-                    value: `Sortie : ${clockOut}`
-                });
+                const clockIn = moment(row.clock_in);  // Moment de l'entrée
+                const clockOut = row.clock_out ? moment(row.clock_out) : null;  // Moment de la sortie (peut être null)
+    
+                embed.addFields(
+                    { name: `🕐 Entrée : ${clockIn.format('YYYY-MM-DD HH:mm')}`, value: `Sortie : ${clockOut ? clockOut.format('YYYY-MM-DD HH:mm') : 'En cours'}` }
+                );
+    
+                // Calcul du temps travaillé si la sortie est définie
+                if (clockOut) {
+                    const diffMinutes = clockOut.diff(clockIn, 'minutes');
+                    totalWorkedMinutes += diffMinutes;
+                }
             });
     
-            embed.addFields({
-                name: 'Total des heures :',
-                value: `${totalHours.toFixed(2)} heures`
-            });
+            // Calcul des heures et minutes totales
+            const hours = Math.floor(totalWorkedMinutes / 60);
+            const minutes = totalWorkedMinutes % 60;
+    
+            embed.addFields(
+                { name: '⏳ **Total travaillé**', value: `${hours}h ${minutes}m` }
+            );
     
             message.reply({ embeds: [embed] });
         } catch (error) {
@@ -256,6 +239,7 @@ client.on('messageCreate', async (message) => {
             message.reply('❌ Une erreur est survenue.');
         }
     }
+    
     
     if (message.content.startsWith('.clockset role')) {
         if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
