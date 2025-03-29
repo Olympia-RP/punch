@@ -241,7 +241,7 @@ client.on('messageCreate', async (message) => {
     
                 let totalWorkedMinutes = 0;
                 let currentEmbed = new EmbedBuilder()
-                    .setColor($parseInt('0x0099ff'))
+                    .setColor(parseInt('0x0099ff'))
                     .setTitle(`Historique des heures de ${message.guild.members.cache.get(userId)?.displayName || `<@${userId}>`}`)  // Utiliser le displayName
                     .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
                 
