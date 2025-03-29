@@ -205,7 +205,7 @@ client.on('messageCreate', async (message) => {
     
             let embed = new EmbedBuilder()
                 .setColor('#0099ff')
-                .setTitle(`Historique des heures de <@${userId}>`)
+                .setTitle(`Historique des heures de ${message.author.tag}`)  // Mentionner l'auteur de la commande
                 .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
     
             let totalWorkedMinutes = 0;
@@ -239,6 +239,7 @@ client.on('messageCreate', async (message) => {
             message.reply('❌ Une erreur est survenue.');
         }
     }
+    
     
     
     if (message.content.startsWith('.clockset role')) {
