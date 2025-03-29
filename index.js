@@ -50,31 +50,60 @@ client.on('messageCreate', async (message) => {
     
     
 
-    if (message.content.startsWith('.clockin')) {
-        try {
-            await pool.query(
-                'INSERT INTO user_hours (guild_id, user_id, clock_in) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE clock_in = ?',
-                [guildId, message.author.id, new Date(), new Date()]
-            );
-            message.reply('🟢 Vous avez enregistré votre entrée.');
-        } catch (error) {
-            console.error('Erreur lors de l\'enregistrement de l\'entrée:', error);
-            message.reply('❌ Une erreur est survenue.');
+    // Exemple pour .clockin
+    if (message.content === '.clockin') {
+        const channelId = 'ID_DU_CANAL_LOG'; // Remplacez par l'ID de votre canal log
+        const logChannel = message.guild.channels.cache.get(channelId);
+
+        // Vérifier si le canal existe
+        if (!logChannel) {
+            return message.reply('❌ Le canal log est introuvable.');
         }
+
+        // Enregistrer l'heure de clock-in
+        connection.query(
+            'INSERT INTO user_hours (user_id, clock_in, guild_id) VALUES (?, NOW(), ?)',
+            [message.author.id, message.guild.id],
+            (err) => {
+                if (err) {
+                    console.error('Erreur lors de l\'enregistrement de l\'entrée:', err);
+                    return message.reply('❌ Une erreur est survenue.');
+                }
+
+                // Envoi du message dans le canal log
+                logChannel.send(`🕒 <@${message.author.id}> a effectué un **clock-in** à ${moment().format('YYYY-MM-DD HH:mm')}.`);
+                message.reply('✅ Vous êtes maintenant **clock-in**.');
+            }
+        );
     }
 
-    if (message.content.startsWith('.clockout')) {
-        try {
-            await pool.query(
-                'UPDATE user_hours SET clock_out = ? WHERE guild_id = ? AND user_id = ?',
-                [new Date(), guildId, message.author.id]
-            );
-            message.reply('🔴 Vous avez enregistré votre sortie.');
-        } catch (error) {
-            console.error('Erreur lors de l\'enregistrement de la sortie:', error);
-            message.reply('❌ Une erreur est survenue.');
+    // Exemple pour .clockout
+    if (message.content === '.clockout') {
+        const channelId = 'ID_DU_CANAL_LOG'; // Remplacez par l'ID de votre canal log
+        const logChannel = message.guild.channels.cache.get(channelId);
+
+        // Vérifier si le canal existe
+        if (!logChannel) {
+            return message.reply('❌ Le canal log est introuvable.');
         }
+
+        // Enregistrer l'heure de clock-out
+        connection.query(
+            'UPDATE user_hours SET clock_out = NOW() WHERE user_id = ? AND clock_out IS NULL AND guild_id = ?',
+            [message.author.id, message.guild.id],
+            (err) => {
+                if (err) {
+                    console.error('Erreur lors de l\'enregistrement de la sortie:', err);
+                    return message.reply('❌ Une erreur est survenue.');
+                }
+
+                // Envoi du message dans le canal log
+                logChannel.send(`🕒 <@${message.author.id}> a effectué un **clock-out** à ${moment().format('YYYY-MM-DD HH:mm')}.`);
+                message.reply('✅ Vous êtes maintenant **clock-out**.');
+            }
+        );
     }
+
 
     
     if (message.content.startsWith('.clockset reset')) {
