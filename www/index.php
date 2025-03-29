@@ -22,7 +22,7 @@ if (isset($member_info['user'])) {
     if ($member_info['user']['avatar'] == null) {
         $avatar = "https://cdn.discordapp.com/embed/avatars/0.png"; // Avatar par défaut
     }    
-    print_r($member_info);
+    echo "<h1>Informations de l'utilisateur</h1>";
     echo "Display Name: $display_name<br>";
     echo "ID: " . $member_info['user']['id'] . "<br>";
     echo "Avatar: <img src='$avatar' width='100'><br>";
