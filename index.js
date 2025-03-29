@@ -203,9 +203,13 @@ client.on('messageCreate', async (message) => {
                 return message.reply(`📭 Aucun historique pour <@${userId}>.`);
             }
     
+            // Récupère le membre de la guild pour obtenir son display name
+            const member = message.guild.members.cache.get(userId);
+            const displayName = member ? member.displayName : message.author.tag;  // Si membre existe, prends son displayName, sinon prends le tag de l'utilisateur
+    
             let embed = new EmbedBuilder()
                 .setColor('#0099ff')
-                .setTitle(`Historique des heures de ${message.author.tag}`)  // Mentionner l'auteur de la commande
+                .setTitle(`Historique des heures de ${displayName}`)  // Afficher le display name dans le titre
                 .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
     
             let totalWorkedMinutes = 0;
@@ -239,6 +243,7 @@ client.on('messageCreate', async (message) => {
             message.reply('❌ Une erreur est survenue.');
         }
     }
+    
     
     
     
