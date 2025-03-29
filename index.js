@@ -1,4 +1,5 @@
-const { Client, GatewayIntentBits, PermissionsBitField, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
+const { EmbedBuilder } = require('@discordjs/builders');
 const fs = require('fs');
 const mysql = require('mysql2');
 const moment = require('moment');
@@ -189,15 +190,22 @@ client.on('messageCreate', async (message) => {
                     const minutes = totalWorkedMinutes % 60;
                     userText += `⏳ **Total travaillé** : ${hours}h ${minutes}m\n`;
     
-                    // Ajouter l'utilisateur et ses heures au tableau des champs
+                    // Diviser l'utilisateurText en plusieurs champs si trop long
+                    const maxFieldLength = 1024;
+                    while (userText.length > maxFieldLength) {
+                        fields.push({
+                            name: `Historique des heures de ${user ? user.user.tag : `Utilisateur ${userId}`}`,
+                            value: userText.substring(0, maxFieldLength)
+                        });
+                        userText = userText.substring(maxFieldLength);
+                    }
+    
+                    // Ajouter le reste du texte (si plus court que maxFieldLength)
                     fields.push({
                         name: `Historique des heures de ${user ? user.user.tag : `Utilisateur ${userId}`}`,
                         value: userText
                     });
                 });
-    
-                // Débogage : vérifier les champs avant de les ajouter
-                console.log('Champs ajoutés à l\'embed:', fields);
     
                 // Ajouter les champs à l'embed après avoir vérifié les données
                 try {
@@ -211,6 +219,7 @@ client.on('messageCreate', async (message) => {
             }
         );
     }
+    
     
     
     
