@@ -161,6 +161,8 @@ client.on('messageCreate', async (message) => {
                     });
                 });
     
+                const fields = []; // Tableau pour stocker les champs
+    
                 // Affiche les heures pour chaque utilisateur
                 Object.keys(userHours).forEach(userId => {
                     const user = message.guild.members.cache.get(userId);
@@ -187,17 +189,29 @@ client.on('messageCreate', async (message) => {
                     const minutes = totalWorkedMinutes % 60;
                     userText += `⏳ **Total travaillé** : ${hours}h ${minutes}m\n`;
     
-                    // Ajouter les heures de l'utilisateur à l'embed
-                    embed.addFields({
+                    // Ajouter l'utilisateur et ses heures au tableau des champs
+                    fields.push({
                         name: `Historique des heures de ${user ? user.user.tag : `Utilisateur ${userId}`}`,
                         value: userText
                     });
                 });
     
+                // Débogage : vérifier les champs avant de les ajouter
+                console.log('Champs ajoutés à l\'embed:', fields);
+    
+                // Ajouter les champs à l'embed après avoir vérifié les données
+                try {
+                    embed.addFields(fields);
+                } catch (error) {
+                    console.error('Erreur lors de l\'ajout des champs:', error);
+                    return message.reply('❌ Une erreur est survenue lors de l\'ajout des champs.');
+                }
+    
                 message.reply({ embeds: [embed] });
             }
         );
     }
+    
     
     
 
