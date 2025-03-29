@@ -73,21 +73,27 @@ async function loadData(guildId) {
 async function saveData(guildId, guildData) {
     try {
         await query(
-            'INSERT INTO guild_settings (guild_id, log_channel, allowed_role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE log_channel = ?, allowed_role = ?',
-            [guildId, guildData.settings.logChannel, guildData.settings.allowedRole, guildData.settings.logChannel, guildData.settings.allowedRole]
+            'INSERT INTO guild_settings (guild_id, log_channel, allowed_role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE log_channel = VALUES(log_channel), allowed_role = VALUES(allowed_role)',
+            [guildId, guildData.settings.logChannel, guildData.settings.allowedRole]
         );
 
-        for (const userId of Object.keys(guildData.hours)) {
-            for (const entry of guildData.hours[userId]) {
-                await query(
-                    'INSERT INTO user_hours (guild_id, user_id, clock_in, clock_out) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE clock_out = ?',
-                    [guildId, userId, entry.clockIn, entry.clockOut, entry.clockOut]
-                );
-            }
+        const values = [];
+        for (const userId in guildData.hours) {
+            guildData.hours[userId].forEach(entry => {
+                values.push([guildId, userId, entry.clockIn, entry.clockOut]);
+            });
+        }
+
+        if (values.length > 0) {
+            await query(
+                'INSERT INTO user_hours (guild_id, user_id, clock_in, clock_out) VALUES ? ON DUPLICATE KEY UPDATE clock_out = VALUES(clock_out)',
+                [values]
+            );
         }
     } catch (error) {
-        console.error(`🛑  Erreur lors de la sauvegarde des données: ${error.message}`);
+        console.error(`🛑 Erreur lors de la sauvegarde des données: ${error.message}`);
     }
 }
+
 
 module.exports = { loadData, saveData, query };
