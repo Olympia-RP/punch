@@ -239,40 +239,70 @@ client.on('messageCreate', async (message) => {
                     return message.reply(`📭 Aucun historique pour <@${userId}>.`);
                 }
     
-                let embed = new EmbedBuilder()
+                let totalWorkedMinutes = 0;
+                let currentEmbed = new EmbedBuilder()
                     .setColor('#0099ff')
                     .setTitle(`Historique des heures de <@${userId}>`)  // Mentionner l'utilisateur dans le titre
                     .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
+                
+                let fieldCount = 0;  // Compteur de champs ajoutés dans l'embed
+                let fieldsToAdd = [];  // Tableau pour stocker les champs à ajouter à l'embed actuel
+                const maxFieldLength = 977;  // Limite de caractères par champ Discord
     
-                let totalWorkedMinutes = 0;
-    
-                results.forEach(row => {
+                results.forEach((row, index) => {
                     const clockIn = moment(row.clock_in);  // Moment de l'entrée
                     const clockOut = row.clock_out ? moment(row.clock_out) : null;  // Moment de la sortie (peut être null)
     
-                    embed.addFields(
-                        { name: `🕐 Entrée : ${clockIn.format('YYYY-MM-DD HH:mm')}`, value: `Sortie : ${clockOut ? clockOut.format('YYYY-MM-DD HH:mm') : 'En cours'}` }
-                    );
+                    // Texte à afficher pour chaque entrée
+                    let userText = `🕐 Entrée : ${clockIn.format('YYYY-MM-DD HH:mm')}, Sortie : ${clockOut ? clockOut.format('YYYY-MM-DD HH:mm') : 'En cours'}`;
     
                     // Calcul du temps travaillé si la sortie est définie
                     if (clockOut) {
                         const diffMinutes = clockOut.diff(clockIn, 'minutes');
                         totalWorkedMinutes += diffMinutes;
                     }
+    
+                    // Ajouter le texte au champ
+                    fieldsToAdd.push({
+                        name: `Entrée : ${clockIn.format('YYYY-MM-DD HH:mm')}`,
+                        value: userText
+                    });
+    
+                    fieldCount++;
+    
+                    // Si le nombre de champs atteint 25 ou que le texte dépasse la limite, envoyer l'embed et réinitialiser
+                    if (fieldCount === 25 || index === results.length - 1 || userText.length > maxFieldLength) {
+                        if (fieldCount > 0) {
+                            // Calcul des heures et minutes totales
+                            const hours = Math.floor(totalWorkedMinutes / 60);
+                            const minutes = totalWorkedMinutes % 60;
+    
+                            currentEmbed.addFields(fieldsToAdd);  // Ajouter les champs collectés
+                            currentEmbed.addFields(
+                                { name: '⏳ **Total travaillé**', value: `${hours}h ${minutes}m` }
+                            );
+    
+                            message.reply({ embeds: [currentEmbed] });
+    
+                            // Si on n'est pas encore à la fin, créez un nouvel embed
+                            if (index !== results.length - 1) {
+                                currentEmbed = new EmbedBuilder()
+                                    .setColor('#0099ff')
+                                    .setTitle(`Historique des heures de <@${userId}>`)
+                                    .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
+                            }
+    
+                            // Réinitialisation des variables pour le prochain groupe de champs
+                            fieldsToAdd = [];
+                            fieldCount = 0;
+                            totalWorkedMinutes = 0;  // Réinitialisation pour le prochain batch d'heures
+                        }
+                    }
                 });
-    
-                // Calcul des heures et minutes totales
-                const hours = Math.floor(totalWorkedMinutes / 60);
-                const minutes = totalWorkedMinutes % 60;
-    
-                embed.addFields(
-                    { name: '⏳ **Total travaillé**', value: `${hours}h ${minutes}m` }
-                );
-    
-                message.reply({ embeds: [embed] });
             }
         );
     }
+    
     
     
     
