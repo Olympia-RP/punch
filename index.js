@@ -120,38 +120,23 @@ client.on('messageCreate', async (message) => {
         }
     }
 
-    if (message.content.startsWith('.clockset log')) {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
-        }
-
-        try {
-            const [logs] = await pool.query(
-                'SELECT user_id, clock_in, clock_out, timestamp FROM user_hour_logs WHERE guild_id = ? ORDER BY timestamp DESC LIMIT 10',
-                [guildId]
-            );
-
-            if (logs.length === 0) {
-                return message.reply('📭 Aucun log disponible.');
+    if (message.content === '.clockset log') {
+        const logMessage = `Nouvelle entrée pour ${message.author.tag} à ${moment().format('YYYY-MM-DD HH:mm')}`;
+        
+        // Insertion du log dans la base de données
+        connection.query(
+            'INSERT INTO user_hour_logs (user_id, log_message, timestamp, guild_id) VALUES (?, ?, ?, ?)',
+            [message.author.id, logMessage, moment().format('YYYY-MM-DD HH:mm:ss'), message.guild.id],
+            (err) => {
+                if (err) {
+                    console.error('Erreur lors de l\'insertion des logs:', err);
+                    return message.reply('❌ Une erreur est survenue lors de l\'enregistrement du log.');
+                }
+                message.reply('✅ Log enregistré avec succès.');
             }
-
-            let embed = new EmbedBuilder()
-                .setColor('#0099ff')
-                .setTitle('Logs des heures récentes')
-                .setDescription('Voici les derniers logs des heures :');
-
-            logs.forEach(log => {
-                const clockIn = moment(log.clock_in).format('ddd MMM DD YYYY HH:mm');
-                const clockOut = log.clock_out ? moment(log.clock_out).format('ddd MMM DD YYYY HH:mm') : 'En cours';
-                embed.addFields({ name: `<@${log.user_id}>`, value: `🕐 Entrée : ${clockIn}, Sortie : ${clockOut}` });
-            });
-
-            message.reply({ embeds: [embed] });
-        } catch (error) {
-            console.error('Erreur lors de la récupération des logs:', error);
-            message.reply('❌ Une erreur est survenue.');
-        }
+        );
     }
+   
 
     if (message.content === '.clockshow') {
         try {
