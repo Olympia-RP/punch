@@ -25,11 +25,16 @@ setInterval(() => {
         if (err) {
             console.error('🛑  Erreur lors du ping de la base de données:', err);
         } else {
-            console.log('✅  Connexion à la base de données toujours active.');
+            if (!keepalive) {
+                keepalive = true;
+                console.log('✅  Connexion à la base de données maintenue active.');
+            }
+            // console.log('✅  Connexion à la base de données toujours active.');
         }
     });
-    console.log('Ping de la base de données actif.');
+    console.log('Ping de la base de données effectué.');
 }, 1 * 60 * 1000); // Ping toutes les 5 minutes (300000 ms)
+console.log('Ping de la base de données actif.');
 
 // Fonction pour charger les données d'un serveur spécifique depuis MySQL
 function loadData(guildId) {
