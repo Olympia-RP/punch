@@ -148,7 +148,7 @@ client.on('messageCreate', async (message) => {
                 }
     
                 let embed = new EmbedBuilder()
-                    .setColor('#0099ff')
+                    .setColor(parseInt('0x0099ff'))
                     .setTitle(`Historique des heures des membres sur ${message.guild.name}`)
                     .setDescription('Voici l\'historique des heures de travail des membres :');
     
