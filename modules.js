@@ -29,7 +29,7 @@ setInterval(() => {
         }
     });
     console.log('Ping de la base de données actif.');
-}, 30 * 60 * 1000); // Ping toutes les 5 minutes (300000 ms)
+}, 1 * 60 * 1000); // Ping toutes les 5 minutes (300000 ms)
 
 // Fonction pour charger les données d'un serveur spécifique depuis MySQL
 function loadData(guildId) {
