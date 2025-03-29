@@ -241,13 +241,13 @@ client.on('messageCreate', async (message) => {
     
                 let totalWorkedMinutes = 0;
                 let currentEmbed = new EmbedBuilder()
-                    .setColor(parseInt('0x0099ff'))
-                    .setTitle(`Historique des heures de <@${userId}>`)  // Mentionner l'utilisateur dans le titre
+                    .setColor('#0099ff')
+                    .setTitle(`Historique des heures de ${message.guild.members.cache.get(userId)?.displayName || `<@${userId}>`}`)  // Utiliser le displayName
                     .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
                 
                 let fieldCount = 0;  // Compteur de champs ajoutés dans l'embed
                 let fieldsToAdd = [];  // Tableau pour stocker les champs à ajouter à l'embed actuel
-                const maxFieldLength = 977;  // Limite de caractères par champ Discord
+                const maxFieldLength = 1024;  // Limite de caractères par champ Discord
     
                 results.forEach((row, index) => {
                     const clockIn = moment(row.clock_in);  // Moment de l'entrée
@@ -288,7 +288,7 @@ client.on('messageCreate', async (message) => {
                             if (index !== results.length - 1) {
                                 currentEmbed = new EmbedBuilder()
                                     .setColor('#0099ff')
-                                    .setTitle(`Historique des heures de <@${userId}>`)
+                                    .setTitle(`Historique des heures de ${message.guild.members.cache.get(userId)?.displayName || `<@${userId}>`}`)
                                     .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
                             }
     
@@ -302,6 +302,7 @@ client.on('messageCreate', async (message) => {
             }
         );
     }
+    
     
     
     
