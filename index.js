@@ -105,39 +105,6 @@ client.on('messageCreate', async (message) => {
     }
 
 
-    
-    if (message.content.startsWith('.clockset reset')) {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
-        }
-
-        try {
-            await pool.query('DELETE FROM user_hours WHERE guild_id = ?', [guildId]);
-            message.reply('✅ Toutes les heures ont été réinitialisées pour ce serveur.');
-        } catch (error) {
-            console.error('Erreur lors de la réinitialisation des heures:', error);
-            message.reply('❌ Une erreur est survenue.');
-        }
-    }
-
-    if (message.content === '.clockset log') {
-        const logMessage = `Nouvelle entrée pour ${message.author.tag} à ${moment().format('YYYY-MM-DD HH:mm')}`;
-        
-        // Insertion du log dans la base de données
-        connection.query(
-            'INSERT INTO user_hour_logs (user_id, log_message, timestamp, guild_id) VALUES (?, ?, ?, ?)',
-            [message.author.id, logMessage, moment().format('YYYY-MM-DD HH:mm:ss'), message.guild.id],
-            (err) => {
-                if (err) {
-                    console.error('Erreur lors de l\'insertion des logs:', err);
-                    return message.reply('❌ Une erreur est survenue lors de l\'enregistrement du log.');
-                }
-                message.reply('✅ Log enregistré avec succès.');
-            }
-        );
-    }
-   
-
     if (message.content === '.clockshow') {
         try {
             const [results] = await pool.query(
@@ -259,6 +226,23 @@ client.on('messageCreate', async (message) => {
     }
     
     
+
+    if (message.content === '.clockset log') {
+        const logMessage = `Nouvelle entrée pour ${message.author.tag} à ${moment().format('YYYY-MM-DD HH:mm')}`;
+        
+        // Insertion du log dans la base de données
+        connection.query(
+            'INSERT INTO user_hour_logs (user_id, log_message, timestamp, guild_id) VALUES (?, ?, ?, ?)',
+            [message.author.id, logMessage, moment().format('YYYY-MM-DD HH:mm:ss'), message.guild.id],
+            (err) => {
+                if (err) {
+                    console.error('Erreur lors de l\'insertion des logs:', err);
+                    return message.reply('❌ Une erreur est survenue lors de l\'enregistrement du log.');
+                }
+                message.reply('✅ Log enregistré avec succès.');
+            }
+        );
+    }
     
     
     if (message.content.startsWith('.clockset role')) {
@@ -276,6 +260,20 @@ client.on('messageCreate', async (message) => {
             }
         } catch (error) {
             console.error('Erreur lors de la gestion du rôle:', error);
+            message.reply('❌ Une erreur est survenue.');
+        }
+    }
+
+    if (message.content.startsWith('.clockset reset')) {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return message.reply("Vous devez être administrateur pour utiliser cette commande.");
+        }
+
+        try {
+            await pool.query('DELETE FROM user_hours WHERE guild_id = ?', [guildId]);
+            message.reply('✅ Toutes les heures ont été réinitialisées pour ce serveur.');
+        } catch (error) {
+            console.error('Erreur lors de la réinitialisation des heures:', error);
             message.reply('❌ Une erreur est survenue.');
         }
     }
