@@ -1,8 +1,5 @@
 <?php
-$discord_id = "843629863537344514"; // Remplace par l'ID du membre
-$guild_id = "1332166613486538844"; // Remplace par l'ID de ton serveur
-$bot_token = "MTM1MjE1Mjk3NzE3OTQxNDY2OQ.GehLkr.cyevOUnjEHpSXYNdXmu7jCD12xT5vBjec7e8x8"; // Remplace par le token de ton bot
-$url = "https://discord.com/api/v10/guilds/$guild_id/members/$discord_id";
+require_once 'config.php'; // Inclure le fichier de configuration pour la connexion à la base de données
 
 $headers = [
     "Authorization: Bot $bot_token",
