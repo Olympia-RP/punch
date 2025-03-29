@@ -134,62 +134,49 @@ client.on('messageCreate', async (message) => {
             if (results.length === 0) {
                 return message.reply('📭 Aucun membre n’a enregistré d’heures.');
             }
-
-            results.forEach(row => {
-                const clockIn = moment(row.clock_in).format('ddd MMM DD YYYY HH:mm');
-                const clockOut = row.clock_out ? moment(row.clock_out).format('ddd MMM DD YYYY HH:mm') : 'En cours';
-            
-                // Calcul du total des heures si les deux horaires existent
-                let totalHours = 0;
-                if (row.clock_out) {
-                    totalHours = moment(row.clock_out).diff(moment(row.clock_in), 'hours', true); // Calcul en heures
-                }
-            
-                const fieldValue = `🕐 Entrée : ${clockIn}, Sortie : ${clockOut}, Total : ${totalHours.toFixed(2)} heures`;
-            
-                // Vérifier si la longueur du texte dépasse la limite de Discord
-                if (fieldValue.length <= 1024) {
-                    embed.addFields({
-                        name: `<@${row.user_id}>`,
-                        value: fieldValue
-                    });
-                } else {
-                    // Si la longueur dépasse, tronquer le texte
-                    embed.addFields({
-                        name: `<@${row.user_id}>`,
-                        value: fieldValue.substring(0, 1021) + '...'  // Troncature à 1024 caractères max
-                    });
-                }
-            });
-            
     
-            let embed = new EmbedBuilder()
+            let embeds = [];
+            let currentEmbed = new EmbedBuilder()
                 .setColor('#0099ff')
                 .setTitle(`Historique des heures des membres sur ${message.guild.name}`)
                 .setDescription('Voici l\'historique des heures de travail des membres :');
     
-            results.forEach(row => {
+            results.forEach((row) => {
                 const clockIn = moment(row.clock_in).format('ddd MMM DD YYYY HH:mm');
                 const clockOut = row.clock_out ? moment(row.clock_out).format('ddd MMM DD YYYY HH:mm') : 'En cours';
-    
-                // Calcul du total des heures si les deux horaires existent
                 let totalHours = 0;
                 if (row.clock_out) {
-                    totalHours = moment(row.clock_out).diff(moment(row.clock_in), 'hours', true); // Calcul en heures
+                    totalHours = moment(row.clock_out).diff(moment(row.clock_in), 'hours', true);
                 }
     
-                embed.addFields({
-                    name: `<@${row.user_id}>`,
-                    value: `🕐 Entrée : ${clockIn}, Sortie : ${clockOut}, Total : ${totalHours.toFixed(2)} heures`
-                });
+                const fieldValue = `🕐 Entrée : ${clockIn}, Sortie : ${clockOut}, Total : ${totalHours.toFixed(2)} heures`;
+    
+                if (currentEmbed.data.fields && currentEmbed.data.fields.length < 25) {
+                    currentEmbed.addFields({ name: `<@${row.user_id}>`, value: fieldValue });
+                } else {
+                    // Si l'embed actuel atteint la limite de 25 champs, on crée un nouvel embed
+                    embeds.push(currentEmbed);
+                    currentEmbed = new EmbedBuilder()
+                        .setColor('#0099ff')
+                        .setTitle(`Historique des heures des membres sur ${message.guild.name}`)
+                        .setDescription('Voici l\'historique des heures de travail des membres :');
+                    currentEmbed.addFields({ name: `<@${row.user_id}>`, value: fieldValue });
+                }
             });
     
-            message.reply({ embeds: [embed] });
+            // Ajouter le dernier embed (s'il y en a un)
+            if (currentEmbed.data.fields.length > 0) {
+                embeds.push(currentEmbed);
+            }
+    
+            // Envoyer tous les embeds
+            message.reply({ embeds: embeds });
         } catch (error) {
             console.error('Erreur lors de la récupération des heures:', error);
-            message.reply('❌ Une erreur est survenue.');
+            message.reply('❌ Une erreur est survenue lors de la récupération des heures.');
         }
     }
+    
     
 
     if (message.content.startsWith('.clockview')) {
