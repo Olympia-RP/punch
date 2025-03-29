@@ -228,9 +228,12 @@ client.on('messageCreate', async (message) => {
     
 
     if (message.content === '.clockset log') {
+        console.log("Commande .clockset log exécutée"); // Ajoutez ceci pour vérifier si la commande est bien reçue
+    
+        // Exemple de log à insérer dans la table user_hour_logs
         const logMessage = `Nouvelle entrée pour ${message.author.tag} à ${moment().format('YYYY-MM-DD HH:mm')}`;
-        
-        // Insertion du log dans la base de données
+    
+        // Insertion dans la base de données
         connection.query(
             'INSERT INTO user_hour_logs (user_id, log_message, timestamp, guild_id) VALUES (?, ?, ?, ?)',
             [message.author.id, logMessage, moment().format('YYYY-MM-DD HH:mm:ss'), message.guild.id],
@@ -239,10 +242,13 @@ client.on('messageCreate', async (message) => {
                     console.error('Erreur lors de l\'insertion des logs:', err);
                     return message.reply('❌ Une erreur est survenue lors de l\'enregistrement du log.');
                 }
+    
+                // Si l'insertion se passe bien
                 message.reply('✅ Log enregistré avec succès.');
             }
         );
     }
+    
     
     
     if (message.content.startsWith('.clockset role')) {
