@@ -17,7 +17,6 @@ const client = new Client({
     ]
 });
 
-
 // Détecter la fermeture du processus (Pterodactyl, Ctrl+C, kill)
 const shutdown = async (signal) => {
     // Vérifier si le client est défini et actif
@@ -50,10 +49,12 @@ client.on('messageCreate', async (message) => {
     // Récupérer l'ID du serveur
     const guildId = message.guild.id;
     let guildData = await loadData(guildId);
+
     // Commande .clock
     if (message.content === '.clock') {
         message.reply('Commandes: .clockin : Enregistrez votre entrée dans le système., .clockout  : Enregistrez votre sortie du système., .clockview  : Affichez votre historique des heures., .clockshow : Affichez l\'historique des heures pour tous les utilisateurs., .clockset log <channelId> : Owner du bot uniquement., .clockset role <roleId> : Owner du bot uniquement., .clockset reset : reset tout les membre avec leur heure tout en gardant le canal log & role intact.');
     }
+
     // Commande .clockin
     if (message.content === '.clockin') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
@@ -84,6 +85,7 @@ client.on('messageCreate', async (message) => {
             if (logChannel) logChannel.send(`<@${userId}> a pointé à ${now}.`);
         }
     }
+
     // Commande .clockout
     if (message.content === '.clockout') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
@@ -115,9 +117,7 @@ client.on('messageCreate', async (message) => {
             if (logChannel) logChannel.send(`<@${userId}> a quitté à ${clockOut}.`);
         }
     }
-    
-    
-    
+          
     // Fonction pour formater la date en format lisible
     const formatDate = (dateString) => {
         if (!dateString) return 'En cours';
@@ -220,10 +220,6 @@ client.on('messageCreate', async (message) => {
         );
     }
     
-    
-    
-    
-
     if (message.content.startsWith('.clockview')) {
         const userId = message.mentions.users.first()?.id || message.author.id;
         connection.query(
@@ -247,7 +243,7 @@ client.on('messageCreate', async (message) => {
                 
                 let fieldCount = 0;  // Compteur de champs ajoutés dans l'embed
                 let fieldsToAdd = [];  // Tableau pour stocker les champs à ajouter à l'embed actuel
-                const maxFieldLength = 1024;  // Limite de caractères par champ Discord
+                const maxFieldLength = 977;  // Limite de caractères par champ Discord
     
                 results.forEach((row, index) => {
                     const clockIn = moment(row.clock_in);  // Moment de l'entrée
@@ -302,12 +298,6 @@ client.on('messageCreate', async (message) => {
             }
         );
     }
-    
-    
-    
-    
-    
-    
 
     // Commande .clockset log
     if (message.content.startsWith('.clockset log')) {
