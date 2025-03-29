@@ -177,7 +177,7 @@ client.on('messageCreate', async (message) => {
                 userText += `⏳ **Total travaillé** : ${hours}h ${minutes}m\n`;
     
                 // Ajouter les heures de l'utilisateur à l'embed
-                // embed.addFields({ name: user ? user.user.tag : `Utilisateur ${userId}`, value: userText });
+                embed.addFields({ name: user ? user.user.tag : `Utilisateur ${userId}`, value: userText });
             }
     
             message.reply({ embeds: [embed] });
