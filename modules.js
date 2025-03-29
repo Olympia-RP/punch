@@ -19,6 +19,8 @@ connection.connect((err) => {
     console.log('✅  Connecté à la base de données MySQL.');
 });
 
+let keepalive = null;
+
 // Ajouter un keepalive pour maintenir la connexion ouverte
 setInterval(() => {
     connection.ping((err) => {
@@ -34,7 +36,7 @@ setInterval(() => {
     });
     console.log('Ping de la base de données effectué.');
 }, 1 * 60 * 1000); // Ping toutes les 5 minutes (300000 ms)
-console.log('Ping de la base de données actif.');
+console.log('🛠️ Ping de la base de données actif.');
 
 // Fonction pour charger les données d'un serveur spécifique depuis MySQL
 function loadData(guildId) {
