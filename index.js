@@ -191,7 +191,7 @@ client.on('messageCreate', async (message) => {
                     userText += `⏳ **Total travaillé** : ${hours}h ${minutes}m\n`;
     
                     // Diviser l'utilisateurText en plusieurs champs si trop long
-                    const maxFieldLength = 1024;
+                    const maxFieldLength = 977;
                     while (userText.length > maxFieldLength) {
                         fields.push({
                             name: `Historique des heures de ${user ? user.user.tag : `Utilisateur ${userId}`}`,
