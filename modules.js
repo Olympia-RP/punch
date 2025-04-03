@@ -25,10 +25,14 @@ let keepalive = null;
 function keepAlive() {
     connection.ping(err => {
         if (err) {
+            let keepAlive = false;
             console.error('🛑 Erreur lors du ping de la base de données:', err);
             reconnectDatabase(); // Relance la connexion en cas d'erreur
         } else {
-            console.log('✅ Ping MySQL réussi, connexion toujours active.');
+            if (!keepAlive) {
+                let keepAlive = true;
+                console.log('✅ Ping MySQL réussi, connexion toujours active.');
+            }
         }
     });
 }
