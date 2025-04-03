@@ -1,4 +1,5 @@
-const { Client, GatewayIntentBits, PermissionsBitField, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
+const { EmbedBuilder } = require('@discordjs/builders');
 const fs = require('fs');
 const mysql = require('mysql2');
 const moment = require('moment');
@@ -15,7 +16,6 @@ const client = new Client({
         GatewayIntentBits.GuildMembers
     ]
 });
-
 
 // Détecter la fermeture du processus (Pterodactyl, Ctrl+C, kill)
 const shutdown = async (signal) => {
@@ -49,10 +49,12 @@ client.on('messageCreate', async (message) => {
     // Récupérer l'ID du serveur
     const guildId = message.guild.id;
     let guildData = await loadData(guildId);
+
     // Commande .clock
     if (message.content === '.clock') {
         message.reply('Commandes: .clockin : Enregistrez votre entrée dans le système., .clockout  : Enregistrez votre sortie du système., .clockview  : Affichez votre historique des heures., .clockshow : Affichez l\'historique des heures pour tous les utilisateurs., .clockset log <channelId> : Owner du bot uniquement., .clockset role <roleId> : Owner du bot uniquement., .clockset reset : reset tout les membre avec leur heure tout en gardant le canal log & role intact.');
     }
+
     // Commande .clockin
     if (message.content === '.clockin') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
@@ -83,6 +85,7 @@ client.on('messageCreate', async (message) => {
             if (logChannel) logChannel.send(`<@${userId}> a pointé à ${now}.`);
         }
     }
+
     // Commande .clockout
     if (message.content === '.clockout') {
         if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
@@ -114,9 +117,7 @@ client.on('messageCreate', async (message) => {
             if (logChannel) logChannel.send(`<@${userId}> a quitté à ${clockOut}.`);
         }
     }
-    
-    
-    
+          
     // Fonction pour formater la date en format lisible
     const formatDate = (dateString) => {
         if (!dateString) return 'En cours';
@@ -147,7 +148,7 @@ client.on('messageCreate', async (message) => {
                 }
     
                 let embed = new EmbedBuilder()
-                    .setColor('#0099ff')
+                    .setColor(parseInt('0x0099ff'))
                     .setTitle(`Historique des heures des membres sur ${message.guild.name}`)
                     .setDescription('Voici l\'historique des heures de travail des membres :');
     
@@ -160,6 +161,8 @@ client.on('messageCreate', async (message) => {
                         clockOut: row.clock_out ? moment(row.clock_out).format('ddd MMM DD YYYY HH:mm') : null
                     });
                 });
+    
+                const fields = []; // Tableau pour stocker les champs
     
                 // Affiche les heures pour chaque utilisateur
                 Object.keys(userHours).forEach(userId => {
@@ -187,16 +190,36 @@ client.on('messageCreate', async (message) => {
                     const minutes = totalWorkedMinutes % 60;
                     userText += `⏳ **Total travaillé** : ${hours}h ${minutes}m\n`;
     
-                    // Ajouter les heures de l'utilisateur à l'embed
-                    embed.addFields({ name: user ? user.user.tag : `Utilisateur ${userId}`, value: userText });
+                    // Diviser l'utilisateurText en plusieurs champs si trop long
+                    const maxFieldLength = 977;
+                    while (userText.length > maxFieldLength) {
+                        fields.push({
+                            name: `Historique des heures de ${user ? user.user.tag : `Utilisateur ${userId}`}`,
+                            value: userText.substring(0, maxFieldLength)
+                        });
+                        userText = userText.substring(maxFieldLength);
+                    }
+    
+                    // Ajouter le reste du texte (si plus court que maxFieldLength)
+                    fields.push({
+                        name: `Historique des heures de ${user ? user.user.tag : `Utilisateur ${userId}`}`,
+                        value: userText
+                    });
                 });
+    
+                // Ajouter les champs à l'embed après avoir vérifié les données
+                try {
+                    embed.addFields(fields);
+                } catch (error) {
+                    console.error('Erreur lors de l\'ajout des champs:', error);
+                    return message.reply('❌ Une erreur est survenue lors de l\'ajout des champs.');
+                }
     
                 message.reply({ embeds: [embed] });
             }
         );
     }
     
-
     if (message.content.startsWith('.clockview')) {
         const userId = message.mentions.users.first()?.id || message.author.id;
         connection.query(
@@ -212,44 +235,69 @@ client.on('messageCreate', async (message) => {
                     return message.reply(`📭 Aucun historique pour <@${userId}>.`);
                 }
     
-                let embed = new EmbedBuilder()
-                    .setColor('#0099ff')
-                    .setTitle(`Historique des heures de <@${userId}>`)  // Mentionner l'utilisateur dans le titre
-                    .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
-    
                 let totalWorkedMinutes = 0;
+                let currentEmbed = new EmbedBuilder()
+                    .setColor(parseInt('0x0099ff'))
+                    .setTitle(`Historique des heures de ${message.guild.members.cache.get(userId)?.displayName || `<@${userId}>`}`)  // Utiliser le displayName
+                    .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
+                
+                let fieldCount = 0;  // Compteur de champs ajoutés dans l'embed
+                let fieldsToAdd = [];  // Tableau pour stocker les champs à ajouter à l'embed actuel
+                const maxFieldLength = 977;  // Limite de caractères par champ Discord
     
-                results.forEach(row => {
+                results.forEach((row, index) => {
                     const clockIn = moment(row.clock_in);  // Moment de l'entrée
                     const clockOut = row.clock_out ? moment(row.clock_out) : null;  // Moment de la sortie (peut être null)
     
-                    embed.addFields(
-                        { name: `🕐 Entrée : ${clockIn.format('YYYY-MM-DD HH:mm')}`, value: `Sortie : ${clockOut ? clockOut.format('YYYY-MM-DD HH:mm') : 'En cours'}` }
-                    );
+                    // Texte à afficher pour chaque entrée
+                    let userText = `🕐 Entrée : ${clockIn.format('YYYY-MM-DD HH:mm')}, Sortie : ${clockOut ? clockOut.format('YYYY-MM-DD HH:mm') : 'En cours'}`;
     
                     // Calcul du temps travaillé si la sortie est définie
                     if (clockOut) {
                         const diffMinutes = clockOut.diff(clockIn, 'minutes');
                         totalWorkedMinutes += diffMinutes;
                     }
+    
+                    // Ajouter le texte au champ
+                    fieldsToAdd.push({
+                        name: `Entrée : ${clockIn.format('YYYY-MM-DD HH:mm')}`,
+                        value: userText
+                    });
+    
+                    fieldCount++;
+    
+                    // Si le nombre de champs atteint 25 ou que le texte dépasse la limite, envoyer l'embed et réinitialiser
+                    if (fieldCount === 25 || index === results.length - 1 || userText.length > maxFieldLength) {
+                        if (fieldCount > 0) {
+                            // Calcul des heures et minutes totales
+                            const hours = Math.floor(totalWorkedMinutes / 60);
+                            const minutes = totalWorkedMinutes % 60;
+    
+                            currentEmbed.addFields(fieldsToAdd);  // Ajouter les champs collectés
+                            currentEmbed.addFields(
+                                { name: '⏳ **Total travaillé**', value: `${hours}h ${minutes}m` }
+                            );
+    
+                            message.reply({ embeds: [currentEmbed] });
+    
+                            // Si on n'est pas encore à la fin, créez un nouvel embed
+                            if (index !== results.length - 1) {
+                                currentEmbed = new EmbedBuilder()
+                                    .setColor('#0099ff')
+                                    .setTitle(`Historique des heures de ${message.guild.members.cache.get(userId)?.displayName || `<@${userId}>`}`)
+                                    .setDescription('Voici l\'historique des heures de travail de l\'utilisateur.');
+                            }
+    
+                            // Réinitialisation des variables pour le prochain groupe de champs
+                            fieldsToAdd = [];
+                            fieldCount = 0;
+                            totalWorkedMinutes = 0;  // Réinitialisation pour le prochain batch d'heures
+                        }
+                    }
                 });
-    
-                // Calcul des heures et minutes totales
-                const hours = Math.floor(totalWorkedMinutes / 60);
-                const minutes = totalWorkedMinutes % 60;
-    
-                embed.addFields(
-                    { name: '⏳ **Total travaillé**', value: `${hours}h ${minutes}m` }
-                );
-    
-                message.reply({ embeds: [embed] });
             }
         );
     }
-    
-    
-    
-    
 
     // Commande .clockset log
     if (message.content.startsWith('.clockset log')) {

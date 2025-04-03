@@ -19,6 +19,48 @@ connection.connect((err) => {
     console.log('✅  Connecté à la base de données MySQL.');
 });
 
+let keepalive = null;
+
+// Fonction pour garder la connexion active
+function keepAlive() {
+    connection.ping(err => {
+        if (err) {
+            let keepAlive = false;
+            console.error('🛑 Erreur lors du ping de la base de données:', err);
+            reconnectDatabase(); // Relance la connexion en cas d'erreur
+        } else {
+            if (!keepAlive) {
+                let keepAlive = true;
+                console.log('✅ Ping MySQL réussi, connexion toujours active.');
+            }
+        }
+    });
+}
+
+// Fonction pour reconnecter en cas de perte de connexion
+function reconnectDatabase() {
+    console.log('♻️ Tentative de reconnexion à MySQL...');
+    connection.destroy(); // Détruit l'ancienne connexion
+    connection = mysql.createConnection({
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME
+    });
+
+    connection.connect(err => {
+        if (err) {
+            console.error('🛑 Erreur de reconnexion à MySQL:', err);
+            setTimeout(reconnectDatabase, 5000); // Réessaie après 5 secondes
+        } else {
+            console.log('✅ Reconnecté à MySQL avec succès.');
+        }
+    });
+}
+
+// Lancer le KeepAlive toutes les 5 minutes
+setInterval(keepAlive, 30 * 60 * 1000);
+
 // Fonction pour charger les données d'un serveur spécifique depuis MySQL
 function loadData(guildId) {
     return new Promise((resolve, reject) => {
@@ -94,5 +136,6 @@ function saveData(guildId, guildData) {
         });
     });
 }
+
 
 module.exports = { loadData, saveData, connection };
