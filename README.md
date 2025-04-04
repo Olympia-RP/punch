@@ -36,7 +36,7 @@ Punch est un bot Discord permettant de gérer les pointages des utilisateurs. Il
 
     - `.clock` : Affiche les commandes disponibles.
     - `.clockin` : Enregistrez votre entrée dans le système.
-    - `.clockout` : Enregistrez votre sortie du système.
+    - `.clockout` ou `.clockout <member> ou <ID>` : Enregistrez votre ou la sortie du système du membre.
     - `.clockview` : Affichez votre historique des heures.
     - `.clockshow` : Affichez l'historique des heures pour tous les utilisateurs.
     - `.clockset log <channel_id>` : Définissez le canal de logs (administrateur uniquement).
