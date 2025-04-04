@@ -87,36 +87,40 @@ client.on('messageCreate', async (message) => {
     }
 
     // Commande .clockout
-    if (message.content === '.clockout') {
-        if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole)) {
+    if (message.content.startsWith('.clockout')) {
+        const args = message.content.split(' ').slice(1);
+        let targetUser = message.mentions.users.first() || (args[0] ? message.guild.members.cache.get(args[0])?.user : null);
+        let isAdmin = message.member.permissions.has('ADMINISTRATOR');
+    
+        if (!targetUser) {
+            targetUser = message.author;
+        } else if (!isAdmin) {
+            return message.reply("Vous n'avez pas la permission d'effectuer un clockout pour un autre membre.");
+        }
+    
+        if (guildData.settings.allowedRole && !message.member.roles.cache.has(guildData.settings.allowedRole) && !isAdmin) {
             return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
         }
-        // Récupérer l'ID de l'utilisateur et l'entrée en cours
-        const userId = message.author.id;
+    
+        const userId = targetUser.id;
         const entry = guildData.hours[userId]?.find(entry => entry.clockOut === null);
     
-        // Vérifier si l'utilisateur est bien en cours de pointage
         if (!entry) {
-            return message.reply("Vous n'êtes pas actuellement pointé. Veuillez d'abord utiliser .clockin.");
+            return message.reply(`<@${userId}> n'est pas actuellement pointé. Veuillez d'abord utiliser .clockin.`);
         }
     
-        // Utilisation de moment pour formater la date de manière correcte
         const clockOut = moment().format('YYYY-MM-DD HH:mm:ss');
-    
-        // Mettre à jour uniquement la première entrée sans 'clockOut'
         entry.clockOut = clockOut;
-    
-        // Sauvegarder les modifications dans la base de données
         saveData(guildId, guildData);
     
-        message.reply(`Vous êtes sorti à ${clockOut}.`);
+        message.reply(`${targetUser === message.author ? "Vous êtes" : `<@${userId}> est`} sorti à ${clockOut}.`);
     
-        // Envoi d'un message dans le canal de log si configuré
         if (guildData.settings.logChannel) {
             const logChannel = message.guild.channels.cache.get(guildData.settings.logChannel);
             if (logChannel) logChannel.send(`<@${userId}> a quitté à ${clockOut}.`);
         }
     }
+    
           
     // Fonction pour formater la date en format lisible
     const formatDate = (dateString) => {
