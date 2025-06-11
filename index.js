@@ -88,9 +88,10 @@ client.on('messageCreate', async (message) => {
 
     // Commande .clockout
     if (message.content.startsWith('.clockout')) {
+        // Vérifier si l'utilisateur a les permissions nécessaires
         const args = message.content.split(' ').slice(1);
         let targetUser = message.mentions.users.first() || (args[0] ? message.guild.members.cache.get(args[0])?.user : null);
-        let isAdmin = message.member.permissions.has('ADMINISTRATOR');
+        let isAdmin = message.member.permissions.has(PermissionsBitField.Flags.Administrator);
     
         if (!targetUser) {
             targetUser = message.author;
